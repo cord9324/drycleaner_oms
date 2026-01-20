@@ -9,46 +9,6 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- RLS POLICIES FOR PROFILES
-ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
-
--- Users can always view their own profile
-CREATE POLICY "Users can view own profile" 
-ON public.profiles FOR SELECT 
-USING (auth.uid() = id);
-
--- Admins/Managers can view all profiles (Direct subquery approach)
-CREATE POLICY "Admins can view all profiles" 
-ON public.profiles FOR SELECT 
-USING (
-  EXISTS (
-    SELECT 1 FROM public.profiles
-    WHERE id = auth.uid() 
-    AND role IN ('ADMIN', 'MANAGER')
-  )
-);
-
--- Only Admins can update/delete profiles
-CREATE POLICY "Admins can update all profiles" 
-ON public.profiles FOR UPDATE 
-USING (
-  EXISTS (
-    SELECT 1 FROM public.profiles
-    WHERE id = auth.uid() 
-    AND role = 'ADMIN'
-  )
-);
-
-CREATE POLICY "Admins can delete profiles" 
-ON public.profiles FOR DELETE 
-USING (
-  EXISTS (
-    SELECT 1 FROM public.profiles
-    WHERE id = auth.uid() 
-    AND role = 'ADMIN'
-  )
-);
-
 -- 2. TIME LOGS TABLE (For Clock-in/Clock-out)
 CREATE TABLE IF NOT EXISTS public.time_logs (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -61,34 +21,60 @@ CREATE TABLE IF NOT EXISTS public.time_logs (
 
 ALTER TABLE public.time_logs ENABLE ROW LEVEL SECURITY;
 
+-- ===============================
 -- STAFF can see their own logs
+-- ===============================
+DROP POLICY IF EXISTS "Users can view own logs" ON public.time_logs;
+
 CREATE POLICY "Users can view own logs" 
-ON public.time_logs FOR SELECT 
+ON public.time_logs 
+FOR SELECT 
 USING (auth.uid() = user_id);
 
--- ADMIN/MANAGER can see all logs (Direct subquery approach)
-CREATE POLICY "Management can view all logs" 
-ON public.time_logs FOR SELECT 
+
+
+-- ===============================
+-- ADMIN/MANAGER can see all logs
+-- ===============================
+DROP POLICY IF EXISTS "Management can view all logs" ON public.time_logs;
+
+CREATE POLICY "Management can view all logs"
+ON public.time_logs
+FOR SELECT
 USING (
   EXISTS (
     SELECT 1 FROM public.profiles
-    WHERE id = auth.uid() 
-    AND role IN ('ADMIN', 'MANAGER')
+    WHERE id = auth.uid()
+      AND role IN ('ADMIN', 'MANAGER')
   )
 );
 
+
+
+-- ===============================
 -- Users can insert their own logs
-CREATE POLICY "Users can clock in" 
-ON public.time_logs FOR INSERT 
+-- ===============================
+DROP POLICY IF EXISTS "Users can clock in" ON public.time_logs;
+
+CREATE POLICY "Users can clock in"
+ON public.time_logs
+FOR INSERT
 WITH CHECK (auth.uid() = user_id);
 
--- Users can update their own clock_out
-CREATE POLICY "Users can clock out" 
-ON public.time_logs FOR UPDATE 
+
+
+-- ===============================
+-- Users can update their own logs
+-- ===============================
+DROP POLICY IF EXISTS "Users can clock out" ON public.time_logs;
+
+CREATE POLICY "Users can clock out"
+ON public.time_logs
+FOR UPDATE
 USING (auth.uid() = user_id)
 WITH CHECK (auth.uid() = user_id);
 
--- 3. OTHER TABLES (STORES, CUSTOMERS, SERVICES, KANBAN, ORDERS)
+-- 3. STORES TABLE
 CREATE TABLE IF NOT EXISTS public.stores (
   id TEXT PRIMARY KEY,
   name TEXT NOT NULL,
@@ -96,6 +82,7 @@ CREATE TABLE IF NOT EXISTS public.stores (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- 4. CUSTOMERS TABLE
 CREATE TABLE IF NOT EXISTS public.customers (
   id TEXT PRIMARY KEY,
   first_name TEXT NOT NULL,
@@ -109,6 +96,7 @@ CREATE TABLE IF NOT EXISTS public.customers (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- 5. SERVICE CATEGORIES TABLE
 CREATE TABLE IF NOT EXISTS public.service_categories (
   id TEXT PRIMARY KEY,
   name TEXT NOT NULL,
@@ -117,6 +105,7 @@ CREATE TABLE IF NOT EXISTS public.service_categories (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- 6. KANBAN COLUMNS TABLE
 CREATE TABLE IF NOT EXISTS public.kanban_columns (
   id TEXT PRIMARY KEY,
   label TEXT NOT NULL,
@@ -126,6 +115,7 @@ CREATE TABLE IF NOT EXISTS public.kanban_columns (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- 7. ORDERS TABLE
 CREATE TABLE IF NOT EXISTS public.orders (
   id TEXT PRIMARY KEY,
   order_number TEXT NOT NULL UNIQUE,
@@ -146,7 +136,8 @@ CREATE TABLE IF NOT EXISTS public.orders (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 4. AUTH SYNC TRIGGER
+-- 8. AUTH SYNC TRIGGER (Auth -> Profile)
+-- This function handles both account creation and profile updates
 CREATE OR REPLACE FUNCTION public.sync_auth_to_profiles()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -157,10 +148,10 @@ BEGIN
       COALESCE(NEW.raw_user_meta_data->>'name', split_part(NEW.email, '@', 1)),
       NEW.email,
       COALESCE(
-        (NEW.raw_user_meta_data->>'role'),
+        (NEW.raw_user_meta_data->>'role')::public.user_role,
         CASE 
-          WHEN (SELECT COUNT(*) FROM public.profiles) = 0 THEN 'ADMIN' 
-          ELSE 'STAFF' 
+          WHEN (SELECT COUNT(*) FROM public.profiles) = 0 THEN 'ADMIN'::public.user_role 
+          ELSE 'STAFF'::public.user_role 
         END
       ),
       'https://api.dicebear.com/7.x/avataaars/svg?seed=' || NEW.id
@@ -170,20 +161,25 @@ BEGIN
     SET 
       name = COALESCE(NEW.raw_user_meta_data->>'name', name),
       email = NEW.email,
-      role = COALESCE(NEW.raw_user_meta_data->>'role', role),
-      updated_at = NOW()
+      role = COALESCE(
+        NULLIF(NEW.raw_user_meta_data->>'role', '')::public.user_role,
+        role
+      )
     WHERE id = NEW.id;
   END IF;
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
+-- Trigger for both INSERT and UPDATE on auth.users
 DROP TRIGGER IF EXISTS on_auth_user_changed ON auth.users;
 CREATE TRIGGER on_auth_user_changed
   AFTER INSERT OR UPDATE ON auth.users
   FOR EACH ROW EXECUTE FUNCTION public.sync_auth_to_profiles();
 
--- 5. AUTH DELETION TRIGGER
+
+-- 9. AUTH DELETION TRIGGER (Profile -> Auth)
+-- This function allows the public schema to delete from the protected auth schema
 CREATE OR REPLACE FUNCTION public.handle_user_delete()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -197,7 +193,7 @@ CREATE TRIGGER on_profile_deleted
   AFTER DELETE ON public.profiles
   FOR EACH ROW EXECUTE FUNCTION public.handle_user_delete();
 
--- 6. INITIAL SEED DATA
+-- 10. INITIAL SEED DATA
 INSERT INTO public.stores (id, name, address)
 VALUES 
 ('s1768827068272', '200 Cleaners (SR 200 Location)', '5400 SW College Rd Ste 302, Ocala, FL'),
