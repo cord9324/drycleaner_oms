@@ -1,0 +1,7 @@
+{
+  "name": "DryClean Pro OMS",
+  "description": "A production-grade Order Management System for dry cleaning businesses, featuring a Kanban board, customer management, and automated pricing.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
