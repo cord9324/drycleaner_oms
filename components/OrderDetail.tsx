@@ -3,109 +3,24 @@ import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useOrderStore } from '../store/useOrderStore';
 import Modal from './Modal';
+import EditOrderForm from './EditOrderForm';
 import { OrderItem, ServiceType } from '../types';
 
 const OrderDetail: React.FC = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { orders, updateOrderStatus, updateOrder, serviceCategories, customers, kanbanColumns } = useOrderStore();
+  const { orders, updateOrderStatus, customers, kanbanColumns } = useOrderStore();
   const order = orders.find(o => o.id === id);
   const customer = customers.find(c => c.id === order?.customerId);
-  
+
   const [isStatusModalOpen, setStatusModalOpen] = useState(false);
   const [isEditModalOpen, setEditModalOpen] = useState(false);
-
-  // Edit Order State
-  const [editedItems, setEditedItems] = useState<OrderItem[]>([]);
-  const [editedPriority, setEditedPriority] = useState(false);
-  const [editedHangerNumber, setEditedHangerNumber] = useState('');
-  const [editedPickupDate, setEditedPickupDate] = useState('');
-  const [editedPickupTime, setEditedPickupTime] = useState('');
-  const [editedSpecialHandling, setEditedSpecialHandling] = useState('');
 
   if (!order) return <div className="p-8">Order not found.</div>;
 
   const handleUpdateStatus = (newStatus: string) => {
     updateOrderStatus(order.id, newStatus);
     setStatusModalOpen(false);
-  };
-
-  const resetEditForm = () => {
-    setEditedItems([]);
-    setEditedPriority(false);
-    setEditedHangerNumber('');
-    setEditedPickupDate('');
-    setEditedPickupTime('');
-    setEditedSpecialHandling('');
-  };
-
-  const openEditModal = () => {
-    setEditedItems([...order.items]);
-    setEditedPriority(order.isPriority);
-    setEditedHangerNumber(order.hangerNumber || '');
-    setEditedPickupDate(order.pickupDate);
-    setEditedPickupTime(order.pickupTime || '17:00');
-    setEditedSpecialHandling(order.specialHandling || '');
-    setEditModalOpen(true);
-  };
-
-  const handleCloseEditModal = () => {
-    setEditModalOpen(false);
-    resetEditForm();
-  };
-
-  const handleEditItemChange = (itemId: string, field: string, value: any) => {
-    setEditedItems(editedItems.map(item => {
-      if (item.id === itemId) {
-        const updated = { ...item, [field]: value };
-        if (field === 'category') {
-          const cat = serviceCategories.find(c => c.name === value);
-          if (cat) {
-            updated.unitPrice = cat.basePrice;
-            updated.serviceType = cat.serviceType;
-          }
-        }
-        updated.total = updated.unitPrice * updated.quantity;
-        return updated;
-      }
-      return item;
-    }));
-  };
-
-  const handleAddEditItem = () => {
-    setEditedItems([...editedItems, {
-      id: Math.random().toString(36).substr(2, 9),
-      category: '',
-      serviceType: ServiceType.DRY_CLEAN,
-      quantity: 1,
-      unitPrice: 0,
-      total: 0
-    }]);
-  };
-
-  const handleRemoveEditItem = (itemId: string) => {
-    if (editedItems.length > 1) {
-      setEditedItems(editedItems.filter(i => i.id !== itemId));
-    }
-  };
-
-  const handleSaveOrder = (e: React.FormEvent) => {
-    e.preventDefault();
-    const subtotal = editedItems.reduce((acc, i) => acc + i.total, 0);
-    const tax = subtotal * 0.08;
-    
-    updateOrder(order.id, {
-      items: editedItems,
-      isPriority: editedPriority,
-      hangerNumber: editedHangerNumber.trim() || undefined,
-      pickupDate: editedPickupDate,
-      pickupTime: editedPickupTime,
-      specialHandling: editedSpecialHandling,
-      subtotal,
-      tax,
-      total: subtotal + tax
-    });
-    handleCloseEditModal();
   };
 
   const formatTime = (timeStr: string) => {
@@ -139,13 +54,13 @@ const OrderDetail: React.FC = () => {
           <div className="flex flex-col gap-1">
             <h1 className="text-gray-900 dark:text-white text-4xl font-black leading-tight tracking-tight">Order #{order.orderNumber}</h1>
             <p className="text-gray-500 dark:text-[#9dabb9] text-sm">
-              Customer: <span className="text-gray-900 dark:text-white font-medium">{order.customerName}</span> | 
+              Customer: <span className="text-gray-900 dark:text-white font-medium">{order.customerName}</span> |
               Hanger: <span className="text-gray-900 dark:text-white font-medium uppercase">{order.hangerNumber || 'N/A'}</span> |
               Status: <span className={`font-bold ${currentColumn?.color?.replace('bg-', 'text-') || 'text-primary'}`}>{currentColumn?.label || order.status}</span>
             </p>
           </div>
           <div className="flex gap-3">
-            <button onClick={openEditModal} className="flex items-center justify-center gap-2 px-4 h-11 bg-gray-100 dark:bg-[#283039] text-gray-900 dark:text-white rounded-lg font-bold hover:bg-gray-200 transition-all">
+            <button onClick={() => setEditModalOpen(true)} className="flex items-center justify-center gap-2 px-4 h-11 bg-gray-100 dark:bg-[#283039] text-gray-900 dark:text-white rounded-lg font-bold hover:bg-gray-200 transition-all">
               <span className="material-symbols-outlined">edit</span> <span>Edit</span>
             </button>
             <button onClick={() => setStatusModalOpen(true)} className="flex items-center justify-center gap-2 px-4 h-11 bg-gray-100 dark:bg-[#283039] text-gray-900 dark:text-white rounded-lg font-bold hover:bg-gray-200 transition-all">
@@ -205,45 +120,45 @@ const OrderDetail: React.FC = () => {
               </div>
             </div>
           </div>
-          
+
           <div className="space-y-6">
-             <div className="bg-white dark:bg-[#1c2127] rounded-xl border border-gray-200 dark:border-[#3b4754] p-6 shadow-sm">
-                <h4 className="text-sm font-bold mb-4">Customer Contact</h4>
-                {customer ? (
-                  <div className="space-y-1">
-                    <p className="font-bold">{customer.firstName} {customer.lastName}</p>
-                    <p className="text-xs text-gray-500">{customer.phone}</p>
-                    <p className="text-xs text-gray-500">{customer.email}</p>
-                  </div>
-                ) : <p className="text-xs text-gray-500">Contact data unavailable</p>}
-             </div>
-             <div className="bg-white dark:bg-[#1c2127] rounded-xl border border-gray-200 dark:border-[#3b4754] p-6 shadow-sm">
-                <h4 className="text-sm font-bold mb-4">Order Lifecycle</h4>
-                <div className="space-y-4">
-                  <div className="flex items-center gap-3">
-                    <span className="material-symbols-outlined text-slate-400">inventory_2</span>
-                    <div>
-                      <p className="text-[10px] font-bold uppercase text-slate-400">Received On</p>
-                      <p className="font-bold text-sm">{formatDate(order.createdAt)}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <span className="material-symbols-outlined text-primary">checkroom</span>
-                    <div>
-                      <p className="text-[10px] font-bold uppercase text-primary">Hanger Location</p>
-                      <p className="font-bold text-sm">{order.hangerNumber || 'Not Tagged'}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <span className="material-symbols-outlined text-primary">schedule</span>
-                    <div>
-                      <p className="text-[10px] font-bold uppercase text-primary">Pickup Window</p>
-                      <p className="font-bold text-sm">{formatDate(order.pickupDate)}</p>
-                      <p className="text-xs text-gray-500">{formatTime(order.pickupTime)}</p>
-                    </div>
+            <div className="bg-white dark:bg-[#1c2127] rounded-xl border border-gray-200 dark:border-[#3b4754] p-6 shadow-sm">
+              <h4 className="text-sm font-bold mb-4">Customer Contact</h4>
+              {customer ? (
+                <div className="space-y-1">
+                  <p className="font-bold">{customer.firstName} {customer.lastName}</p>
+                  <p className="text-xs text-gray-500">{customer.phone}</p>
+                  <p className="text-xs text-gray-500">{customer.email}</p>
+                </div>
+              ) : <p className="text-xs text-gray-500">Contact data unavailable</p>}
+            </div>
+            <div className="bg-white dark:bg-[#1c2127] rounded-xl border border-gray-200 dark:border-[#3b4754] p-6 shadow-sm">
+              <h4 className="text-sm font-bold mb-4">Order Lifecycle</h4>
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <span className="material-symbols-outlined text-slate-400">inventory_2</span>
+                  <div>
+                    <p className="text-[10px] font-bold uppercase text-slate-400">Received On</p>
+                    <p className="font-bold text-sm">{formatDate(order.createdAt)}</p>
                   </div>
                 </div>
-             </div>
+                <div className="flex items-center gap-3">
+                  <span className="material-symbols-outlined text-primary">checkroom</span>
+                  <div>
+                    <p className="text-[10px] font-bold uppercase text-primary">Hanger Location</p>
+                    <p className="font-bold text-sm">{order.hangerNumber || 'Not Tagged'}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="material-symbols-outlined text-primary">schedule</span>
+                  <div>
+                    <p className="text-[10px] font-bold uppercase text-primary">Pickup Window</p>
+                    <p className="font-bold text-sm">{formatDate(order.pickupDate)}</p>
+                    <p className="text-xs text-gray-500">{formatTime(order.pickupTime)}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -262,8 +177,8 @@ const OrderDetail: React.FC = () => {
             <h2 className="text-2xl font-black">{order.orderNumber}</h2>
           </div>
           <div className="text-right">
-             <p className="text-[10px] font-bold uppercase opacity-60">Received</p>
-             <p className="text-xs font-bold">{new Date(order.createdAt).toLocaleDateString()}</p>
+            <p className="text-[10px] font-bold uppercase opacity-60">Received</p>
+            <p className="text-xs font-bold">{new Date(order.createdAt).toLocaleDateString()}</p>
           </div>
         </div>
 
@@ -274,14 +189,14 @@ const OrderDetail: React.FC = () => {
         </div>
 
         <div className="bg-black text-white p-3 rounded text-center">
-           <p className="text-[10px] font-bold uppercase opacity-70">Ready for Pickup</p>
-           <p className="text-xl font-black uppercase">{formatDate(order.pickupDate)} @ {formatTime(order.pickupTime)}</p>
+          <p className="text-[10px] font-bold uppercase opacity-70">Ready for Pickup</p>
+          <p className="text-xl font-black uppercase">{formatDate(order.pickupDate)} @ {formatTime(order.pickupTime)}</p>
         </div>
-        
+
         {order.hangerNumber && (
           <div className="text-center bg-slate-100 p-2 rounded">
-             <p className="text-[10px] font-black uppercase opacity-60">Hanger Number</p>
-             <p className="text-2xl font-black">{order.hangerNumber}</p>
+            <p className="text-[10px] font-black uppercase opacity-60">Hanger Number</p>
+            <p className="text-2xl font-black">{order.hangerNumber}</p>
           </div>
         )}
 
@@ -329,42 +244,8 @@ const OrderDetail: React.FC = () => {
         </div>
       </Modal>
 
-      <Modal isOpen={isEditModalOpen} onClose={handleCloseEditModal} title="Edit Order Details">
-        <form onSubmit={handleSaveOrder} className="space-y-6">
-          <div className="grid grid-cols-2 gap-4">
-             <div>
-               <label className="text-xs font-bold uppercase text-slate-500 mb-1 block">Hanger #</label>
-               <input type="text" placeholder="E.g. A-12" className="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary/20" value={editedHangerNumber} onChange={e => setEditedHangerNumber(e.target.value)} />
-             </div>
-             <div>
-               <label className="text-xs font-bold uppercase text-slate-500 mb-1 block">Expedite</label>
-               <div className="flex items-center gap-3 bg-amber-50 dark:bg-amber-900/10 p-2.5 rounded-lg border border-amber-200 h-[46px]"><input type="checkbox" id="editPriority" checked={editedPriority} onChange={e => setEditedPriority(e.target.checked)} /><label htmlFor="editPriority" className="text-xs font-bold text-amber-600">Priority</label></div>
-             </div>
-          </div>
-          
-          <div className="space-y-3">
-            <div className="flex justify-between items-center"><label className="text-xs font-bold uppercase text-slate-500">Items</label><button type="button" onClick={handleAddEditItem} className="text-primary text-xs font-bold">+ Add Item</button></div>
-            {editedItems.map(item => (
-              <div key={item.id} className="grid grid-cols-12 gap-2 items-end bg-slate-50 dark:bg-slate-800 p-3 rounded-xl">
-                <div className="col-span-6">
-                  <select required className="w-full bg-white dark:bg-slate-900 p-2 rounded-lg text-sm" value={item.category} onChange={e => handleEditItemChange(item.id, 'category', e.target.value)}>
-                    <option value="">Select Category</option>
-                    {serviceCategories.map(cat => <option key={cat.id} value={cat.name}>{cat.name}</option>)}
-                  </select>
-                </div>
-                <div className="col-span-3"><input type="number" min="1" className="w-full bg-white dark:bg-slate-900 p-2 rounded-lg text-sm" value={item.quantity} onChange={e => handleEditItemChange(item.id, 'quantity', parseInt(e.target.value))} /></div>
-                <div className="col-span-2 text-right text-xs font-bold pt-5">${item.total.toFixed(2)}</div>
-                <div className="col-span-1"><button type="button" onClick={() => handleRemoveEditItem(item.id)} className="text-red-500"><span className="material-symbols-outlined text-[20px]">delete</span></button></div>
-              </div>
-            ))}
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-             <input type="date" className="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl text-sm" value={editedPickupDate} onChange={e => setEditedPickupDate(e.target.value)} />
-             <input type="time" className="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl text-sm" value={editedPickupTime} onChange={e => setEditedPickupTime(e.target.value)} />
-          </div>
-          <textarea placeholder="Special Handling Notes" className="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl text-sm h-24" value={editedSpecialHandling} onChange={e => setEditedSpecialHandling(e.target.value)} />
-          <button type="submit" className="w-full bg-primary text-white font-bold py-3.5 rounded-xl">Save Changes</button>
-        </form>
+      <Modal isOpen={isEditModalOpen} onClose={() => setEditModalOpen(false)} title="Edit Order Details">
+        {isEditModalOpen && <EditOrderForm order={order} onClose={() => setEditModalOpen(false)} />}
       </Modal>
     </div>
   );

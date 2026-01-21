@@ -3,13 +3,14 @@ import React, { useState, useMemo } from 'react';
 import { useOrderStore } from '../store/useOrderStore';
 import { useNavigate } from 'react-router-dom';
 import Modal from './Modal';
+import CustomerForm from './CustomerForm';
 import { Button } from './ui/Button';
 import { Customer, Order } from '../types';
 
 type SortKey = 'name' | 'email' | 'address' | 'totalSpent' | 'lastOrderDate';
 
 const CustomerList: React.FC = () => {
-  const { customers, orders, addCustomer, updateCustomer, deleteCustomer, kanbanColumns } = useOrderStore();
+  const { customers, orders, deleteCustomer, kanbanColumns } = useOrderStore();
   const [localSearch, setLocalSearch] = useState('');
   const navigate = useNavigate();
 
@@ -23,40 +24,11 @@ const CustomerList: React.FC = () => {
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [customerOrders, setCustomerOrders] = useState<Order[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [newCustomer, setNewCustomer] = useState({
-    firstName: '',
-    lastName: '',
-    email: '',
-    phone: '',
-    address: ''
-  });
-
-  const resetAddForm = () => {
-    setNewCustomer({ firstName: '', lastName: '', email: '', phone: '', address: '' });
-  };
-
-  const resetEditForm = () => {
-    setSelectedCustomer(null);
-  };
-
-  const resetHistoryForm = () => {
-    setSelectedCustomer(null);
-    setCustomerOrders([]);
-  };
-
-  const handleCloseAddModal = () => {
-    setIsAddModalOpen(false);
-    resetAddForm();
-  };
-
-  const handleCloseEditModal = () => {
-    setIsEditModalOpen(false);
-    resetEditForm();
-  };
 
   const handleCloseHistoryModal = () => {
     setIsHistoryModalOpen(false);
-    resetHistoryForm();
+    setSelectedCustomer(null);
+    setCustomerOrders([]);
   };
 
   // Sorting state
@@ -134,34 +106,7 @@ const CustomerList: React.FC = () => {
     return result;
   }, [customers, localSearch, sortConfig]);
 
-  const handleAddSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    try {
-      await addCustomer({
-        ...newCustomer,
-        id: `c${Date.now()}`,
-        createdAt: new Date().toISOString(),
-        totalSpent: 0
-      });
-      handleCloseAddModal();
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
 
-  const handleEditSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (selectedCustomer) {
-      setIsSubmitting(true);
-      try {
-        await updateCustomer(selectedCustomer.id, selectedCustomer);
-        handleCloseEditModal();
-      } finally {
-        setIsSubmitting(false);
-      }
-    }
-  };
 
   const handleDeleteConfirm = async () => {
     if (selectedCustomer) {
@@ -316,76 +261,17 @@ const CustomerList: React.FC = () => {
       </div>
 
       {/* Register Customer Modal */}
-      <Modal isOpen={isAddModalOpen} onClose={handleCloseAddModal} title="Register New Customer">
-        <form onSubmit={handleAddSubmit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-bold uppercase text-slate-500 mb-1">First Name</label>
-              <input required value={newCustomer.firstName} onChange={e => setNewCustomer({ ...newCustomer, firstName: e.target.value })} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-primary/20 outline-none" placeholder="John" />
-            </div>
-            <div>
-              <label className="block text-xs font-bold uppercase text-slate-500 mb-1">Last Name</label>
-              <input required value={newCustomer.lastName} onChange={e => setNewCustomer({ ...newCustomer, lastName: e.target.value })} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-primary/20 outline-none" placeholder="Doe" />
-            </div>
-          </div>
-          <div>
-            <label className="block text-xs font-bold uppercase text-slate-500 mb-1">Email (Optional)</label>
-            <input type="email" value={newCustomer.email} onChange={e => setNewCustomer({ ...newCustomer, email: e.target.value })} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-primary/20 outline-none" placeholder="john.doe@example.com" />
-          </div>
-          <div>
-            <label className="block text-xs font-bold uppercase text-slate-500 mb-1">Phone</label>
-            <input required value={newCustomer.phone} onChange={e => setNewCustomer({ ...newCustomer, phone: e.target.value })} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-primary/20 outline-none" placeholder="555-0100" />
-          </div>
-          <div>
-            <label className="block text-xs font-bold uppercase text-slate-500 mb-1">Address</label>
-            <textarea value={newCustomer.address} onChange={e => setNewCustomer({ ...newCustomer, address: e.target.value })} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 text-sm h-20 focus:ring-2 focus:ring-primary/20 outline-none" placeholder="123 Main St..." />
-          </div>
-          <Button type="submit" fullWidth isLoading={isSubmitting}>Save Customer</Button>
-        </form>
+      <Modal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} title="Register New Customer">
+        {isAddModalOpen && <CustomerForm onClose={() => setIsAddModalOpen(false)} />}
       </Modal>
 
       {/* Edit Customer Modal */}
-      <Modal isOpen={isEditModalOpen} onClose={handleCloseEditModal} title="Edit Customer Profile">
-        {selectedCustomer && (
-          <form onSubmit={handleEditSubmit} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-bold uppercase text-slate-500 mb-1">First Name</label>
-                <input required value={selectedCustomer.firstName} onChange={e => setSelectedCustomer({ ...selectedCustomer, firstName: e.target.value })} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-primary/20 outline-none" />
-              </div>
-              <div>
-                <label className="block text-xs font-bold uppercase text-slate-500 mb-1">Last Name</label>
-                <input required value={selectedCustomer.lastName} onChange={e => setSelectedCustomer({ ...selectedCustomer, lastName: e.target.value })} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-primary/20 outline-none" />
-              </div>
-            </div>
-            <div>
-              <label className="block text-xs font-bold uppercase text-slate-500 mb-1">Email (Optional)</label>
-              <input type="email" value={selectedCustomer.email} onChange={e => setSelectedCustomer({ ...selectedCustomer, email: e.target.value })} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-primary/20 outline-none" />
-            </div>
-            <div>
-              <label className="block text-xs font-bold uppercase text-slate-500 mb-1">Phone</label>
-              <input required value={selectedCustomer.phone} onChange={e => setSelectedCustomer({ ...selectedCustomer, phone: e.target.value })} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-primary/20 outline-none" />
-            </div>
-            <div>
-              <label className="block text-xs font-bold uppercase text-slate-500 mb-1">Address</label>
-              <textarea value={selectedCustomer.address} onChange={e => setSelectedCustomer({ ...selectedCustomer, address: e.target.value })} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 text-sm h-20 focus:ring-2 focus:ring-primary/20 outline-none" />
-            </div>
-            <div className="p-4 bg-slate-100 dark:bg-slate-900/50 rounded-xl space-y-1">
-              <div className="flex justify-between text-xs">
-                <span className="text-slate-500">Member Since</span>
-                <span className="font-bold">{new Date(selectedCustomer.createdAt).toLocaleDateString()}</span>
-              </div>
-              <div className="flex justify-between text-xs">
-                <span className="text-slate-500">Last Active</span>
-                <span className="font-bold">{selectedCustomer.lastOrderDate ? new Date(selectedCustomer.lastOrderDate).toLocaleDateString() : 'N/A'}</span>
-              </div>
-              <div className="flex justify-between text-xs">
-                <span className="text-slate-500">Lifetime Revenue</span>
-                <span className="font-bold text-emerald-500">${selectedCustomer.totalSpent.toLocaleString()}</span>
-              </div>
-            </div>
-            <Button type="submit" fullWidth isLoading={isSubmitting}>Update Profile</Button>
-          </form>
+      <Modal isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)} title="Edit Customer Profile">
+        {selectedCustomer && isEditModalOpen && (
+          <CustomerForm
+            initialData={selectedCustomer}
+            onClose={() => setIsEditModalOpen(false)}
+          />
         )}
       </Modal>
 
