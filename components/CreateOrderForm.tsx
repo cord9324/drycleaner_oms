@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useOrderStore } from '../store/useOrderStore';
 import { Button } from './ui/Button';
+import Combobox from './ui/Combobox';
 import { ServiceType, OrderItem, Customer } from '../types';
 
 interface CreateOrderFormProps {
@@ -165,10 +166,17 @@ const CreateOrderForm: React.FC<CreateOrderFormProps> = ({ onClose, onSuccess })
                 <div className="space-y-1">
                     <div className="flex justify-between items-center"><label className="text-[10px] font-bold text-slate-400 uppercase">Customer</label><button type="button" onClick={() => setIsNewCustomer(!isNewCustomer)} className="text-primary text-[10px] font-bold uppercase">{isNewCustomer ? 'Existing' : 'New Client'}</button></div>
                     {!isNewCustomer ? (
-                        <select required className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 text-sm" value={selectedCustomerId} onChange={(e) => setSelectedCustomerId(e.target.value)}>
-                            <option value="">Choose Existing...</option>
-                            {customers.map(c => <option key={c.id} value={c.id}>{c.firstName} {c.lastName}</option>)}
-                        </select>
+                        <Combobox
+                            required
+                            options={customers.map(c => ({
+                                value: c.id,
+                                label: `${c.firstName} ${c.lastName}`,
+                                subLabel: c.phone
+                            }))}
+                            value={selectedCustomerId}
+                            onChange={setSelectedCustomerId}
+                            placeholder="Search Customer..."
+                        />
                     ) : (
                         <div className="space-y-2">
                             <div className="grid grid-cols-2 gap-2">

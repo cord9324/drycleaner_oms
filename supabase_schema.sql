@@ -9,6 +9,15 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "profiles_select_all_authenticated" ON public.profiles;
+CREATE POLICY "profiles_select_all_authenticated"
+  ON public.profiles
+  FOR SELECT
+  TO authenticated
+  USING (true);
+
 -- 2. TIME LOGS TABLE (For Clock-in/Clock-out)
 CREATE TABLE IF NOT EXISTS public.time_logs (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -82,6 +91,15 @@ CREATE TABLE IF NOT EXISTS public.stores (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+ALTER TABLE public.stores ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "stores_select_all_authenticated" ON public.stores;
+CREATE POLICY "stores_select_all_authenticated"
+  ON public.stores
+  FOR SELECT
+  TO authenticated
+  USING (true);
+
 -- 4. CUSTOMERS TABLE
 CREATE TABLE IF NOT EXISTS public.customers (
   id TEXT PRIMARY KEY,
@@ -96,6 +114,16 @@ CREATE TABLE IF NOT EXISTS public.customers (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+ALTER TABLE public.customers ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "customers_select_all_authenticated" ON public.customers;
+CREATE POLICY "customers_select_all_authenticated"
+  ON public.customers
+  FOR SELECT
+  TO authenticated
+  USING (true);
+
+
 -- 5. SERVICE CATEGORIES TABLE
 CREATE TABLE IF NOT EXISTS public.service_categories (
   id TEXT PRIMARY KEY,
@@ -104,6 +132,15 @@ CREATE TABLE IF NOT EXISTS public.service_categories (
   base_price DECIMAL(10,2) NOT NULL,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
+ALTER TABLE public.service_categories ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "service_categories_select_all_authenticated" ON public.service_categories;
+CREATE POLICY "service_categories_select_all_authenticated"
+  ON public.service_categories
+  FOR SELECT
+  TO authenticated
+  USING (true);
 
 -- 6. KANBAN COLUMNS TABLE
 CREATE TABLE IF NOT EXISTS public.kanban_columns (
@@ -114,6 +151,15 @@ CREATE TABLE IF NOT EXISTS public.kanban_columns (
   position INTEGER DEFAULT 0,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
+ALTER TABLE public.kanban_columns ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "kanban_columns_select_all_authenticated" ON public.kanban_columns;
+CREATE POLICY "kanban_columns_select_all_authenticated"
+  ON public.kanban_columns
+  FOR SELECT
+  TO authenticated
+  USING (true);
 
 -- 7. ORDERS TABLE
 CREATE TABLE IF NOT EXISTS public.orders (
@@ -135,6 +181,15 @@ CREATE TABLE IF NOT EXISTS public.orders (
   completed_at TIMESTAMP WITH TIME ZONE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
+ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "orders_select_all_authenticated" ON public.orders;
+CREATE POLICY "orders_select_all_authenticated"
+  ON public.orders
+  FOR SELECT
+  TO authenticated
+  USING (true);
 
 -- 8. AUTH SYNC TRIGGER (Auth -> Profile)
 -- This function handles both account creation and profile updates
