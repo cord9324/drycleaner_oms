@@ -3,6 +3,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useOrderStore } from '../store/useOrderStore';
 import Modal from './Modal';
+import { Button } from './ui/Button';
 import { ServiceType, OrderItem, Customer } from '../types';
 import { supabase } from '../lib/supabase';
 
@@ -10,19 +11,20 @@ const Layout: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { currentUser, setSearchQuery, searchQuery, addOrder, addCustomer, updateCustomer, customers, stores, serviceCategories, kanbanColumns, clockIn, clockOut, timeLogs } = useOrderStore();
-  
+
   const [isOrderModalOpen, setOrderModalOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [isNewCustomer, setIsNewCustomer] = useState(false);
   const [newCustomerData, setNewCustomerData] = useState({ firstName: '', lastName: '', phone: '', email: '', notes: '' });
   const [selectedCustomerId, setSelectedCustomerId] = useState('');
   const [selectedStoreId, setSelectedStoreId] = useState('');
   const [hangerNumber, setHangerNumber] = useState('');
-  
+
   const [orderItems, setOrderItems] = useState<Partial<OrderItem>[]>([
     { id: Math.random().toString(36).substr(2, 9), category: '', quantity: 1, unitPrice: 0, total: 0 }
   ]);
   const [isPriority, setIsPriority] = useState(false);
-  const [pickupDate, setPickupDate] = useState(new Date(Date.now() + 86400000 * 2).toISOString().split('T')[0]); 
+  const [pickupDate, setPickupDate] = useState(new Date(Date.now() + 86400000 * 2).toISOString().split('T')[0]);
   const [pickupTime, setPickupTime] = useState('17:00');
   const [specialHandling, setSpecialHandling] = useState('');
 
@@ -71,6 +73,7 @@ const Layout: React.FC = () => {
 
   const handleCreateOrder = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSubmitting(true);
     let customer: Customer | undefined;
     const now = new Date().toISOString();
 
@@ -92,7 +95,7 @@ const Layout: React.FC = () => {
       } else {
         customer = customers.find(c => c.id === selectedCustomerId);
         if (customer) {
-          await updateCustomer(customer.id, { 
+          await updateCustomer(customer.id, {
             lastOrderDate: now,
             totalSpent: (customer.totalSpent || 0) + (calculateSubtotal() * 1.08)
           });
@@ -136,13 +139,14 @@ const Layout: React.FC = () => {
 
       setOrderModalOpen(false);
       navigate('/orders');
-      setOrderItems([{ id: Math.random().toString(36).substr(2, 9), category: '', quantity: 1, unitPrice: 0, total: 0 }]);
       setHangerNumber('');
       setSpecialHandling('');
       setIsPriority(false);
     } catch (err) {
       console.error("Failed to create order", err);
       alert("Error creating order. Please ensure all fields are valid.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -178,7 +182,7 @@ const Layout: React.FC = () => {
         <div className="flex flex-col gap-4 mt-auto">
           {/* Time Clock Status Widget */}
           <div className="px-2">
-            <button 
+            <button
               onClick={() => isClockedIn ? clockOut() : clockIn()}
               className={`w-full flex items-center justify-between px-4 py-2.5 rounded-xl border transition-all ${isClockedIn ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-600' : 'bg-slate-50 dark:bg-slate-900/50 border-slate-200 dark:border-slate-800 text-slate-500'}`}
             >
@@ -193,9 +197,9 @@ const Layout: React.FC = () => {
           <div className="flex items-center justify-between p-2 rounded-xl bg-slate-50 dark:bg-slate-900/50">
             <div className="flex items-center gap-3 overflow-hidden">
               <div className="h-8 w-8 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 overflow-hidden shrink-0 ring-2 ring-primary/20">
-                <img 
-                  alt="avatar" 
-                  src={currentUser?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${currentUser?.name || 'User'}`} 
+                <img
+                  alt="avatar"
+                  src={currentUser?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${currentUser?.name || 'User'}`}
                   onError={(e) => { e.currentTarget.src = `https://api.dicebear.com/7.x/avataaars/svg?seed=fallback`; }}
                 />
               </div>
@@ -251,32 +255,32 @@ const Layout: React.FC = () => {
               ) : (
                 <div className="space-y-2">
                   <div className="grid grid-cols-2 gap-2">
-                    <input required placeholder="First" className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2 text-xs" value={newCustomerData.firstName} onChange={(e) => setNewCustomerData({...newCustomerData, firstName: e.target.value})} />
-                    <input required placeholder="Last" className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2 text-xs" value={newCustomerData.lastName} onChange={(e) => setNewCustomerData({...newCustomerData, lastName: e.target.value})} />
+                    <input required placeholder="First" className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2 text-xs" value={newCustomerData.firstName} onChange={(e) => setNewCustomerData({ ...newCustomerData, firstName: e.target.value })} />
+                    <input required placeholder="Last" className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2 text-xs" value={newCustomerData.lastName} onChange={(e) => setNewCustomerData({ ...newCustomerData, lastName: e.target.value })} />
                   </div>
-                  <input required placeholder="Phone (Required)" className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2 text-xs" value={newCustomerData.phone} onChange={(e) => setNewCustomerData({...newCustomerData, phone: e.target.value})} />
+                  <input required placeholder="Phone (Required)" className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2 text-xs" value={newCustomerData.phone} onChange={(e) => setNewCustomerData({ ...newCustomerData, phone: e.target.value })} />
                 </div>
               )}
             </div>
           </div>
 
           <div className="space-y-3">
-             <div className="flex justify-between items-center"><label className="text-[10px] font-bold text-slate-400 uppercase">Order Items</label><button type="button" onClick={handleAddItem} className="text-primary text-[10px] font-bold uppercase">+ Add Line</button></div>
-             <div className="max-h-48 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
-               {orderItems.map(item => (
-                  <div key={item.id} className="grid grid-cols-12 gap-2 bg-slate-50 dark:bg-slate-800/50 p-2 rounded-lg border border-slate-200 dark:border-slate-700">
-                    <div className="col-span-7">
-                      <select required className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded p-1 text-xs" value={item.category} onChange={(e) => handleItemChange(item.id!, 'category', e.target.value)}>
-                        <option value="">Select Service...</option>
-                        {serviceCategories.map(cat => <option key={cat.id} value={cat.name}>{cat.name} (${cat.basePrice})</option>)}
-                      </select>
-                    </div>
-                    <div className="col-span-2"><input type="number" min="1" className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded p-1 text-xs" value={item.quantity} onChange={(e) => handleItemChange(item.id!, 'quantity', parseInt(e.target.value))} /></div>
-                    <div className="col-span-2 text-right text-xs font-bold pt-1.5">${(item.total || 0).toFixed(2)}</div>
-                    <div className="col-span-1 flex items-center justify-center"><button type="button" onClick={() => handleRemoveItem(item.id!)} className="text-slate-400 hover:text-red-500"><span className="material-symbols-outlined text-[16px]">close</span></button></div>
+            <div className="flex justify-between items-center"><label className="text-[10px] font-bold text-slate-400 uppercase">Order Items</label><button type="button" onClick={handleAddItem} className="text-primary text-[10px] font-bold uppercase">+ Add Line</button></div>
+            <div className="max-h-48 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
+              {orderItems.map(item => (
+                <div key={item.id} className="grid grid-cols-12 gap-2 bg-slate-50 dark:bg-slate-800/50 p-2 rounded-lg border border-slate-200 dark:border-slate-700">
+                  <div className="col-span-7">
+                    <select required className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded p-1 text-xs" value={item.category} onChange={(e) => handleItemChange(item.id!, 'category', e.target.value)}>
+                      <option value="">Select Service...</option>
+                      {serviceCategories.map(cat => <option key={cat.id} value={cat.name}>{cat.name} (${cat.basePrice})</option>)}
+                    </select>
                   </div>
-               ))}
-             </div>
+                  <div className="col-span-2"><input type="number" min="1" className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded p-1 text-xs" value={item.quantity} onChange={(e) => handleItemChange(item.id!, 'quantity', parseInt(e.target.value))} /></div>
+                  <div className="col-span-2 text-right text-xs font-bold pt-1.5">${(item.total || 0).toFixed(2)}</div>
+                  <div className="col-span-1 flex items-center justify-center"><button type="button" onClick={() => handleRemoveItem(item.id!)} className="text-slate-400 hover:text-red-500"><span className="material-symbols-outlined text-[16px]">close</span></button></div>
+                </div>
+              ))}
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -309,7 +313,7 @@ const Layout: React.FC = () => {
               <p className="text-[10px] font-bold text-slate-400 uppercase">Estimated Total</p>
               <p className="text-2xl font-black text-primary">${(calculateSubtotal() * 1.08).toFixed(2)}</p>
             </div>
-            <button type="submit" className="bg-primary text-white font-bold px-8 py-3 rounded-xl shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all active:scale-[0.98]">Create Order</button>
+            <Button type="submit" isLoading={isSubmitting} size="lg">Create Order</Button>
           </div>
         </form>
       </Modal>

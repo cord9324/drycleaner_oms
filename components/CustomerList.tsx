@@ -3,6 +3,7 @@ import React, { useState, useMemo } from 'react';
 import { useOrderStore } from '../store/useOrderStore';
 import { useNavigate } from 'react-router-dom';
 import Modal from './Modal';
+import { Button } from './ui/Button';
 import { Customer, Order } from '../types';
 
 type SortKey = 'name' | 'email' | 'address' | 'totalSpent' | 'lastOrderDate';
@@ -11,16 +12,17 @@ const CustomerList: React.FC = () => {
   const { customers, orders, addCustomer, updateCustomer, deleteCustomer, kanbanColumns } = useOrderStore();
   const [localSearch, setLocalSearch] = useState('');
   const navigate = useNavigate();
-  
+
   // Modal states
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
-  
+
   // Form states
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [customerOrders, setCustomerOrders] = useState<Order[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [newCustomer, setNewCustomer] = useState({
     firstName: '',
     lastName: '',
@@ -90,7 +92,7 @@ const CustomerList: React.FC = () => {
   };
 
   const filteredAndSorted = useMemo(() => {
-    let result = customers.filter(c => 
+    let result = customers.filter(c =>
       `${c.firstName} ${c.lastName}`.toLowerCase().includes(localSearch.toLowerCase()) ||
       c.email.toLowerCase().includes(localSearch.toLowerCase()) ||
       c.phone.includes(localSearch)
@@ -98,7 +100,7 @@ const CustomerList: React.FC = () => {
 
     result.sort((a, b) => {
       let valA: any, valB: any;
-      
+
       switch (sortConfig.key) {
         case 'name':
           valA = `${a.firstName} ${a.lastName}`.toLowerCase();
@@ -132,30 +134,45 @@ const CustomerList: React.FC = () => {
     return result;
   }, [customers, localSearch, sortConfig]);
 
-  const handleAddSubmit = (e: React.FormEvent) => {
+  const handleAddSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    addCustomer({
-      ...newCustomer,
-      id: `c${Date.now()}`,
-      createdAt: new Date().toISOString(),
-      totalSpent: 0
-    });
-    handleCloseAddModal();
-  };
-
-  const handleEditSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (selectedCustomer) {
-      updateCustomer(selectedCustomer.id, selectedCustomer);
-      handleCloseEditModal();
+    setIsSubmitting(true);
+    try {
+      await addCustomer({
+        ...newCustomer,
+        id: `c${Date.now()}`,
+        createdAt: new Date().toISOString(),
+        totalSpent: 0
+      });
+      handleCloseAddModal();
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  const handleDeleteConfirm = () => {
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     if (selectedCustomer) {
-      deleteCustomer(selectedCustomer.id);
-      setIsDeleteModalOpen(false);
-      setSelectedCustomer(null);
+      setIsSubmitting(true);
+      try {
+        await updateCustomer(selectedCustomer.id, selectedCustomer);
+        handleCloseEditModal();
+      } finally {
+        setIsSubmitting(false);
+      }
+    }
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (selectedCustomer) {
+      setIsSubmitting(true);
+      try {
+        await deleteCustomer(selectedCustomer.id);
+        setIsDeleteModalOpen(false);
+        setSelectedCustomer(null);
+      } finally {
+        setIsSubmitting(false);
+      }
     }
   };
 
@@ -195,20 +212,20 @@ const CustomerList: React.FC = () => {
         <div className="flex items-center gap-3 w-full sm:w-auto">
           <label className="relative flex-1 sm:min-w-64">
             <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-sm text-[#9dabb9]">search</span>
-            <input 
+            <input
               value={localSearch}
               onChange={(e) => setLocalSearch(e.target.value)}
-              className="w-full bg-white dark:bg-[#111418] border border-slate-200 dark:border-[#283039] rounded-lg py-1.5 pl-10 pr-4 text-sm focus:ring-primary focus:border-primary text-slate-900 dark:text-white" 
-              placeholder="Search customers..." 
+              className="w-full bg-white dark:bg-[#111418] border border-slate-200 dark:border-[#283039] rounded-lg py-1.5 pl-10 pr-4 text-sm focus:ring-primary focus:border-primary text-slate-900 dark:text-white"
+              placeholder="Search customers..."
               type="text"
             />
           </label>
-          <button 
+          <Button
             onClick={() => setIsAddModalOpen(true)}
-            className="bg-primary hover:bg-primary/90 text-white px-4 py-1.5 rounded-lg text-sm font-bold shadow-md whitespace-nowrap transition-all active:scale-95"
+            size="sm"
           >
             + New Customer
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -267,21 +284,21 @@ const CustomerList: React.FC = () => {
                     </td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex justify-end gap-2">
-                        <button 
+                        <button
                           onClick={() => openHistoryModal(c)}
                           className="p-2 text-slate-400 hover:text-primary transition-colors hover:bg-primary/10 rounded-lg"
                           title="View Order History"
                         >
                           <span className="material-symbols-outlined">visibility</span>
                         </button>
-                        <button 
+                        <button
                           onClick={() => openEditModal(c)}
                           className="p-2 text-slate-400 hover:text-indigo-500 transition-colors hover:bg-indigo-500/10 rounded-lg"
                           title="Edit Profile"
                         >
                           <span className="material-symbols-outlined">edit</span>
                         </button>
-                        <button 
+                        <button
                           onClick={() => openDeleteModal(c)}
                           className="p-2 text-slate-400 hover:text-red-500 transition-colors hover:bg-red-500/10 rounded-lg"
                           title="Delete Customer"
@@ -304,26 +321,26 @@ const CustomerList: React.FC = () => {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-bold uppercase text-slate-500 mb-1">First Name</label>
-              <input required value={newCustomer.firstName} onChange={e => setNewCustomer({...newCustomer, firstName: e.target.value})} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-primary/20 outline-none" placeholder="John" />
+              <input required value={newCustomer.firstName} onChange={e => setNewCustomer({ ...newCustomer, firstName: e.target.value })} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-primary/20 outline-none" placeholder="John" />
             </div>
             <div>
               <label className="block text-xs font-bold uppercase text-slate-500 mb-1">Last Name</label>
-              <input required value={newCustomer.lastName} onChange={e => setNewCustomer({...newCustomer, lastName: e.target.value})} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-primary/20 outline-none" placeholder="Doe" />
+              <input required value={newCustomer.lastName} onChange={e => setNewCustomer({ ...newCustomer, lastName: e.target.value })} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-primary/20 outline-none" placeholder="Doe" />
             </div>
           </div>
           <div>
             <label className="block text-xs font-bold uppercase text-slate-500 mb-1">Email (Optional)</label>
-            <input type="email" value={newCustomer.email} onChange={e => setNewCustomer({...newCustomer, email: e.target.value})} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-primary/20 outline-none" placeholder="john.doe@example.com" />
+            <input type="email" value={newCustomer.email} onChange={e => setNewCustomer({ ...newCustomer, email: e.target.value })} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-primary/20 outline-none" placeholder="john.doe@example.com" />
           </div>
           <div>
             <label className="block text-xs font-bold uppercase text-slate-500 mb-1">Phone</label>
-            <input required value={newCustomer.phone} onChange={e => setNewCustomer({...newCustomer, phone: e.target.value})} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-primary/20 outline-none" placeholder="555-0100" />
+            <input required value={newCustomer.phone} onChange={e => setNewCustomer({ ...newCustomer, phone: e.target.value })} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-primary/20 outline-none" placeholder="555-0100" />
           </div>
           <div>
             <label className="block text-xs font-bold uppercase text-slate-500 mb-1">Address</label>
-            <textarea value={newCustomer.address} onChange={e => setNewCustomer({...newCustomer, address: e.target.value})} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 text-sm h-20 focus:ring-2 focus:ring-primary/20 outline-none" placeholder="123 Main St..." />
+            <textarea value={newCustomer.address} onChange={e => setNewCustomer({ ...newCustomer, address: e.target.value })} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 text-sm h-20 focus:ring-2 focus:ring-primary/20 outline-none" placeholder="123 Main St..." />
           </div>
-          <button type="submit" className="w-full bg-primary text-white font-bold py-3.5 rounded-xl shadow-lg hover:bg-primary/90 transition-all active:scale-[0.98] mt-4">Save Customer</button>
+          <Button type="submit" fullWidth isLoading={isSubmitting}>Save Customer</Button>
         </form>
       </Modal>
 
@@ -334,24 +351,24 @@ const CustomerList: React.FC = () => {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-bold uppercase text-slate-500 mb-1">First Name</label>
-                <input required value={selectedCustomer.firstName} onChange={e => setSelectedCustomer({...selectedCustomer, firstName: e.target.value})} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-primary/20 outline-none" />
+                <input required value={selectedCustomer.firstName} onChange={e => setSelectedCustomer({ ...selectedCustomer, firstName: e.target.value })} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-primary/20 outline-none" />
               </div>
               <div>
                 <label className="block text-xs font-bold uppercase text-slate-500 mb-1">Last Name</label>
-                <input required value={selectedCustomer.lastName} onChange={e => setSelectedCustomer({...selectedCustomer, lastName: e.target.value})} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-primary/20 outline-none" />
+                <input required value={selectedCustomer.lastName} onChange={e => setSelectedCustomer({ ...selectedCustomer, lastName: e.target.value })} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-primary/20 outline-none" />
               </div>
             </div>
             <div>
               <label className="block text-xs font-bold uppercase text-slate-500 mb-1">Email (Optional)</label>
-              <input type="email" value={selectedCustomer.email} onChange={e => setSelectedCustomer({...selectedCustomer, email: e.target.value})} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-primary/20 outline-none" />
+              <input type="email" value={selectedCustomer.email} onChange={e => setSelectedCustomer({ ...selectedCustomer, email: e.target.value })} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-primary/20 outline-none" />
             </div>
             <div>
               <label className="block text-xs font-bold uppercase text-slate-500 mb-1">Phone</label>
-              <input required value={selectedCustomer.phone} onChange={e => setSelectedCustomer({...selectedCustomer, phone: e.target.value})} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-primary/20 outline-none" />
+              <input required value={selectedCustomer.phone} onChange={e => setSelectedCustomer({ ...selectedCustomer, phone: e.target.value })} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-primary/20 outline-none" />
             </div>
             <div>
               <label className="block text-xs font-bold uppercase text-slate-500 mb-1">Address</label>
-              <textarea value={selectedCustomer.address} onChange={e => setSelectedCustomer({...selectedCustomer, address: e.target.value})} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 text-sm h-20 focus:ring-2 focus:ring-primary/20 outline-none" />
+              <textarea value={selectedCustomer.address} onChange={e => setSelectedCustomer({ ...selectedCustomer, address: e.target.value })} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 text-sm h-20 focus:ring-2 focus:ring-primary/20 outline-none" />
             </div>
             <div className="p-4 bg-slate-100 dark:bg-slate-900/50 rounded-xl space-y-1">
               <div className="flex justify-between text-xs">
@@ -367,15 +384,15 @@ const CustomerList: React.FC = () => {
                 <span className="font-bold text-emerald-500">${selectedCustomer.totalSpent.toLocaleString()}</span>
               </div>
             </div>
-            <button type="submit" className="w-full bg-primary text-white font-bold py-3.5 rounded-xl shadow-lg hover:bg-primary/90 transition-all active:scale-[0.98]">Update Profile</button>
+            <Button type="submit" fullWidth isLoading={isSubmitting}>Update Profile</Button>
           </form>
         )}
       </Modal>
 
       {/* History Modal */}
-      <Modal 
-        isOpen={isHistoryModalOpen} 
-        onClose={handleCloseHistoryModal} 
+      <Modal
+        isOpen={isHistoryModalOpen}
+        onClose={handleCloseHistoryModal}
         title={selectedCustomer ? `${selectedCustomer.firstName} ${selectedCustomer.lastName}'s Order History` : 'Order History'}
       >
         <div className="space-y-4">
@@ -405,7 +422,7 @@ const CustomerList: React.FC = () => {
                         </td>
                         <td className="px-4 py-3 text-right font-bold">${order.total.toFixed(2)}</td>
                         <td className="px-4 py-3 text-right">
-                          <button 
+                          <button
                             onClick={() => { handleCloseHistoryModal(); navigate(`/orders/${order.id}`); }}
                             className="p-1.5 text-slate-400 hover:text-primary transition-colors"
                             title="View Details"
@@ -437,23 +454,27 @@ const CustomerList: React.FC = () => {
           <div>
             <h4 className="text-lg font-bold text-slate-900 dark:text-white">Delete Customer?</h4>
             <p className="text-sm text-slate-500 mt-2">
-              Are you sure you want to delete <span className="font-bold text-slate-900 dark:text-white">{selectedCustomer?.firstName} {selectedCustomer?.lastName}</span>? 
+              Are you sure you want to delete <span className="font-bold text-slate-900 dark:text-white">{selectedCustomer?.firstName} {selectedCustomer?.lastName}</span>?
               This action cannot be undone and will remove all their records.
             </p>
           </div>
           <div className="flex gap-3">
-            <button 
+            <Button
               onClick={() => setIsDeleteModalOpen(false)}
-              className="flex-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold py-3 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-all"
+              variant="secondary"
+              fullWidth
+              disabled={isSubmitting}
             >
               Cancel
-            </button>
-            <button 
+            </Button>
+            <Button
               onClick={handleDeleteConfirm}
-              className="flex-1 bg-red-500 text-white font-bold py-3 rounded-xl hover:bg-red-600 shadow-lg shadow-red-500/20 transition-all active:scale-95"
+              variant="danger"
+              fullWidth
+              isLoading={isSubmitting}
             >
               Delete
-            </button>
+            </Button>
           </div>
         </div>
       </Modal>
