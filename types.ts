@@ -11,7 +11,8 @@ export enum OrderStatus {
   CLEANING = 'CLEANING',
   READY = 'READY',
   COMPLETED = 'COMPLETED',
-  HOLD = 'HOLD'
+  HOLD = 'HOLD',
+  VOID = 'VOID'
 }
 
 export interface ServiceCategory {

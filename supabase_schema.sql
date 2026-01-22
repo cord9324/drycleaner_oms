@@ -11,12 +11,42 @@ CREATE TABLE IF NOT EXISTS public.profiles (
 
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 
+-- Helper function to check if user is admin or manager
+CREATE OR REPLACE FUNCTION public.is_admin_or_manager()
+RETURNS BOOLEAN AS $$
+BEGIN
+  RETURN EXISTS (
+    SELECT 1 FROM public.profiles
+    WHERE id = auth.uid()
+      AND role IN ('ADMIN', 'MANAGER')
+  );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
 DROP POLICY IF EXISTS "profiles_select_all_authenticated" ON public.profiles;
 CREATE POLICY "profiles_select_all_authenticated"
   ON public.profiles
   FOR SELECT
   TO authenticated
   USING (true);
+
+DROP POLICY IF EXISTS "profiles_insert_management" ON public.profiles;
+CREATE POLICY "profiles_insert_management"
+  ON public.profiles
+  FOR INSERT
+  WITH CHECK (public.is_admin_or_manager());
+
+DROP POLICY IF EXISTS "profiles_update_own_or_management" ON public.profiles;
+CREATE POLICY "profiles_update_own_or_management"
+  ON public.profiles
+  FOR UPDATE
+  USING (auth.uid() = id OR public.is_admin_or_manager());
+
+DROP POLICY IF EXISTS "profiles_delete_management" ON public.profiles;
+CREATE POLICY "profiles_delete_management"
+  ON public.profiles
+  FOR DELETE
+  USING (public.is_admin_or_manager());
 
 -- 2. TIME LOGS TABLE (For Clock-in/Clock-out)
 CREATE TABLE IF NOT EXISTS public.time_logs (
@@ -50,13 +80,7 @@ DROP POLICY IF EXISTS "Management can view all logs" ON public.time_logs;
 CREATE POLICY "Management can view all logs"
 ON public.time_logs
 FOR SELECT
-USING (
-  EXISTS (
-    SELECT 1 FROM public.profiles
-    WHERE id = auth.uid()
-      AND role IN ('ADMIN', 'MANAGER')
-  )
-);
+USING (public.is_admin_or_manager());
 
 
 
@@ -100,6 +124,12 @@ CREATE POLICY "stores_select_all_authenticated"
   TO authenticated
   USING (true);
 
+DROP POLICY IF EXISTS "stores_modify_management" ON public.stores;
+CREATE POLICY "stores_modify_management"
+  ON public.stores
+  FOR ALL
+  USING (public.is_admin_or_manager());
+
 -- 4. CUSTOMERS TABLE
 CREATE TABLE IF NOT EXISTS public.customers (
   id TEXT PRIMARY KEY,
@@ -123,6 +153,26 @@ CREATE POLICY "customers_select_all_authenticated"
   TO authenticated
   USING (true);
 
+DROP POLICY IF EXISTS "customers_insert_authenticated" ON public.customers;
+CREATE POLICY "customers_insert_authenticated"
+  ON public.customers
+  FOR INSERT
+  TO authenticated
+  WITH CHECK (true);
+
+DROP POLICY IF EXISTS "customers_update_authenticated" ON public.customers;
+CREATE POLICY "customers_update_authenticated"
+  ON public.customers
+  FOR UPDATE
+  TO authenticated
+  USING (true);
+
+DROP POLICY IF EXISTS "customers_delete_management" ON public.customers;
+CREATE POLICY "customers_delete_management"
+  ON public.customers
+  FOR DELETE
+  USING (public.is_admin_or_manager());
+
 
 -- 5. SERVICE CATEGORIES TABLE
 CREATE TABLE IF NOT EXISTS public.service_categories (
@@ -142,6 +192,12 @@ CREATE POLICY "service_categories_select_all_authenticated"
   TO authenticated
   USING (true);
 
+DROP POLICY IF EXISTS "service_categories_modify_management" ON public.service_categories;
+CREATE POLICY "service_categories_modify_management"
+  ON public.service_categories
+  FOR ALL
+  USING (public.is_admin_or_manager());
+
 -- 6. KANBAN COLUMNS TABLE
 CREATE TABLE IF NOT EXISTS public.kanban_columns (
   id TEXT PRIMARY KEY,
@@ -160,6 +216,12 @@ CREATE POLICY "kanban_columns_select_all_authenticated"
   FOR SELECT
   TO authenticated
   USING (true);
+
+DROP POLICY IF EXISTS "kanban_columns_modify_management" ON public.kanban_columns;
+CREATE POLICY "kanban_columns_modify_management"
+  ON public.kanban_columns
+  FOR ALL
+  USING (public.is_admin_or_manager());
 
 -- 7. ORDERS TABLE
 CREATE TABLE IF NOT EXISTS public.orders (
@@ -190,6 +252,26 @@ CREATE POLICY "orders_select_all_authenticated"
   FOR SELECT
   TO authenticated
   USING (true);
+
+DROP POLICY IF EXISTS "orders_insert_authenticated" ON public.orders;
+CREATE POLICY "orders_insert_authenticated"
+  ON public.orders
+  FOR INSERT
+  TO authenticated
+  WITH CHECK (true);
+
+DROP POLICY IF EXISTS "orders_update_authenticated" ON public.orders;
+CREATE POLICY "orders_update_authenticated"
+  ON public.orders
+  FOR UPDATE
+  TO authenticated
+  USING (true);
+
+DROP POLICY IF EXISTS "orders_delete_management" ON public.orders;
+CREATE POLICY "orders_delete_management"
+  ON public.orders
+  FOR DELETE
+  USING (public.is_admin_or_manager());
 
 -- 8. AUTH SYNC TRIGGER (Auth -> Profile)
 -- This function handles both account creation and profile updates

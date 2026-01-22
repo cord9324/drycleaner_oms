@@ -10,17 +10,25 @@ const KanbanBoard: React.FC = () => {
   const [draggedId, setDraggedId] = useState<string | null>(null);
 
   const filteredOrders = orders.filter(o => {
-    const matchesSearch = o.customerName.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                          o.orderNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          o.hangerNumber?.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch = o.customerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      o.orderNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      o.hangerNumber?.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesLocation = locationFilter === 'all' || o.storeId === locationFilter;
-    
+
     // Apply 48-hour visibility rule for COMPLETED orders
     if (o.status === OrderStatus.COMPLETED) {
       if (!o.completedAt) return false;
       const completedTime = new Date(o.completedAt).getTime();
       const now = new Date().getTime();
       const diffHrs = (now - completedTime) / (1000 * 60 * 60);
+      if (diffHrs > 48) return false;
+    }
+
+    // Apply 48-hour visibility rule for VOID orders
+    if (o.status === OrderStatus.VOID) {
+      const createdTime = new Date(o.createdAt).getTime();
+      const now = new Date().getTime();
+      const diffHrs = (now - createdTime) / (1000 * 60 * 60);
       if (diffHrs > 48) return false;
     }
 
@@ -50,33 +58,33 @@ const KanbanBoard: React.FC = () => {
   return (
     <div className="p-8 h-full flex flex-col gap-6">
       <div className="flex items-center justify-between">
-         <div className="flex items-center gap-3">
-            <div className="relative group">
-              <button className="flex h-9 items-center gap-x-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-3 hover:border-primary transition-colors">
-                <span className="material-symbols-outlined text-slate-500 text-[18px]">location_on</span>
-                <span className="text-slate-700 dark:text-white text-xs font-medium">
-                  {locationFilter === 'all' ? 'All Locations' : stores.find(s => s.id === locationFilter)?.name}
-                </span>
-                <span className="material-symbols-outlined text-slate-400 text-[18px]">expand_more</span>
-              </button>
-              <div className="absolute top-full left-0 mt-2 w-48 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg shadow-xl hidden group-hover:block z-20">
-                <button onClick={() => setLocationFilter('all')} className="w-full text-left px-4 py-2 text-xs hover:bg-slate-100 dark:hover:bg-slate-800 first:rounded-t-lg last:rounded-b-lg">All Locations</button>
-                {stores.map(s => (
-                  <button key={s.id} onClick={() => setLocationFilter(s.id)} className="w-full text-left px-4 py-2 text-xs hover:bg-slate-100 dark:hover:bg-slate-800">{s.name}</button>
-                ))}
-              </div>
+        <div className="flex items-center gap-3">
+          <div className="relative group">
+            <button className="flex h-9 items-center gap-x-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-3 hover:border-primary transition-colors">
+              <span className="material-symbols-outlined text-slate-500 text-[18px]">location_on</span>
+              <span className="text-slate-700 dark:text-white text-xs font-medium">
+                {locationFilter === 'all' ? 'All Locations' : stores.find(s => s.id === locationFilter)?.name}
+              </span>
+              <span className="material-symbols-outlined text-slate-400 text-[18px]">expand_more</span>
+            </button>
+            <div className="absolute top-full left-0 mt-2 w-48 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg shadow-xl hidden group-hover:block z-20">
+              <button onClick={() => setLocationFilter('all')} className="w-full text-left px-4 py-2 text-xs hover:bg-slate-100 dark:hover:bg-slate-800 first:rounded-t-lg last:rounded-b-lg">All Locations</button>
+              {stores.map(s => (
+                <button key={s.id} onClick={() => setLocationFilter(s.id)} className="w-full text-left px-4 py-2 text-xs hover:bg-slate-100 dark:hover:bg-slate-800">{s.name}</button>
+              ))}
             </div>
-         </div>
-         <div className="flex items-center gap-2">
-           <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Completed order window: 48h</span>
-         </div>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Completed/Voided window: 48h</span>
+        </div>
       </div>
 
       <div className="flex-1 overflow-x-auto pb-4 custom-scrollbar">
         <div className="flex gap-6 h-full min-w-max">
           {kanbanColumns.map((col) => (
-            <div 
-              key={col.id} 
+            <div
+              key={col.id}
               className="w-[300px] flex flex-col gap-4"
               onDragOver={handleDragOver}
               onDrop={(e) => handleDrop(e, col.status)}
