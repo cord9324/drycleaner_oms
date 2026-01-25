@@ -94,3 +94,7 @@ export interface TimeLog {
   clock_out: string | null;
   notes?: string;
 }
+
+export interface AppSettings {
+  taxRate: number;
+}

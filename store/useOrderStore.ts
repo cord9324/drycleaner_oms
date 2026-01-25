@@ -1,6 +1,6 @@
 
 import { create } from 'zustand';
-import { Order, Customer, Store, User, ServiceCategory, ServiceType, KanbanColumn, TimeLog, OrderStatus } from '../types';
+import { Order, Customer, Store, User, ServiceCategory, ServiceType, KanbanColumn, TimeLog, OrderStatus, AppSettings } from '../types';
 import { supabase, CURRENT_URL, CURRENT_KEY } from '../lib/supabase';
 import { Session, createClient } from '@supabase/supabase-js';
 
@@ -14,50 +14,53 @@ interface OrderState {
   timeLogs: TimeLog[];
   currentUser: User | null;
   session: Session | null;
+  settings: AppSettings;
   loading: boolean;
   searchQuery: string;
   locationFilter: string;
-  
+
   // Auth Actions
   setSession: (session: Session | null) => void;
   setProfile: (profile: User | null) => void;
-  
+
   // Data Actions
   fetchInitialData: () => Promise<void>;
   subscribeToChanges: () => () => void;
-  
+
   // Time Tracking
   clockIn: () => Promise<void>;
   clockOut: () => Promise<void>;
   fetchTimeLogs: () => Promise<void>;
-  
+
   // Orders
   updateOrderStatus: (orderId: string, status: string) => Promise<void>;
   addOrder: (order: Order) => Promise<void>;
   updateOrder: (orderId: string, updates: Partial<Order>) => Promise<void>;
-  
+
   // Customers
   addCustomer: (customer: Customer) => Promise<void>;
   updateCustomer: (id: string, updates: Partial<Customer>) => Promise<void>;
   deleteCustomer: (id: string) => Promise<void>;
-  
+
   // Settings / Setup
   addStore: (store: Store) => Promise<void>;
   updateStore: (id: string, updates: Partial<Store>) => Promise<void>;
   deleteStore: (id: string) => Promise<void>;
-  
+
   addUser: (userData: { name: string, email: string, role: string, password?: string }) => Promise<void>;
   updateUser: (userId: string, updates: Partial<User>) => Promise<void>;
   deleteUser: (userId: string) => Promise<void>;
-  
+
   addServiceCategory: (category: ServiceCategory) => Promise<void>;
   updateServiceCategory: (id: string, updates: Partial<ServiceCategory>) => Promise<void>;
   deleteServiceCategory: (id: string) => Promise<void>;
-  
+
   addKanbanColumn: (column: Omit<KanbanColumn, 'position'>) => Promise<void>;
   updateKanbanColumn: (id: string, updates: Partial<KanbanColumn>) => Promise<void>;
   deleteKanbanColumn: (id: string) => Promise<void>;
   reorderKanbanColumns: (startIndex: number, endIndex: number) => Promise<void>;
+
+  updateSettings: (updates: Partial<AppSettings>) => Promise<void>;
 
   setSearchQuery: (query: string) => void;
   setLocationFilter: (locationId: string) => void;
@@ -73,6 +76,7 @@ export const useOrderStore = create<OrderState>((set, get) => ({
   timeLogs: [],
   currentUser: null,
   session: null,
+  settings: { taxRate: 0.08 },
   loading: false,
   searchQuery: '',
   locationFilter: 'all',
@@ -89,14 +93,16 @@ export const useOrderStore = create<OrderState>((set, get) => ({
         storesRes,
         servicesRes,
         columnsRes,
-        profilesRes
+        profilesRes,
+        settingsRes
       ] = await Promise.all([
         supabase.from('orders').select('*').order('created_at', { ascending: false }),
         supabase.from('customers').select('*'),
         supabase.from('stores').select('*'),
         supabase.from('service_categories').select('*'),
         supabase.from('kanban_columns').select('*').order('position'),
-        supabase.from('profiles').select('*')
+        supabase.from('profiles').select('*'),
+        supabase.from('app_settings').select('*').eq('id', 'default').single()
       ]);
 
       const currentUser = get().currentUser;
@@ -144,6 +150,7 @@ export const useOrderStore = create<OrderState>((set, get) => ({
         })),
         kanbanColumns: columnsRes.data || [],
         users: fetchedUsers,
+        settings: settingsRes.data ? { taxRate: parseFloat(settingsRes.data.tax_rate) } : { taxRate: 0.08 },
         loading: false
       });
 
@@ -162,6 +169,7 @@ export const useOrderStore = create<OrderState>((set, get) => ({
       .on('postgres_changes', { event: '*', table: 'customers', schema: 'public' }, () => get().fetchInitialData())
       .on('postgres_changes', { event: '*', table: 'profiles', schema: 'public' }, () => get().fetchInitialData())
       .on('postgres_changes', { event: '*', table: 'time_logs', schema: 'public' }, () => get().fetchTimeLogs())
+      .on('postgres_changes', { event: '*', table: 'app_settings', schema: 'public' }, () => get().fetchInitialData())
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
@@ -172,7 +180,7 @@ export const useOrderStore = create<OrderState>((set, get) => ({
       .from('time_logs')
       .select('*')
       .order('clock_in', { ascending: false });
-    
+
     if (!error) set({ timeLogs: data });
   },
 
@@ -190,7 +198,7 @@ export const useOrderStore = create<OrderState>((set, get) => ({
     const { error } = await supabase
       .from('time_logs')
       .insert([{ user_id: userId, clock_in: new Date().toISOString() }]);
-    
+
     if (error) console.error("Clock In Error:", error.message);
     else await get().fetchTimeLogs();
   },
@@ -209,14 +217,14 @@ export const useOrderStore = create<OrderState>((set, get) => ({
       .from('time_logs')
       .update({ clock_out: new Date().toISOString() })
       .eq('id', activeSession.id);
-    
+
     if (error) console.error("Clock Out Error:", error.message);
     else await get().fetchTimeLogs();
   },
 
   updateOrderStatus: async (orderId, status) => {
     const isCompleted = status === OrderStatus.COMPLETED;
-    const dbUpdates: any = { 
+    const dbUpdates: any = {
       status,
       completed_at: isCompleted ? new Date().toISOString() : null
     };
@@ -246,7 +254,7 @@ export const useOrderStore = create<OrderState>((set, get) => ({
       created_at: order.createdAt,
       completed_at: order.status === OrderStatus.COMPLETED ? order.createdAt : null
     }]);
-    
+
     if (error) {
       console.error("Order Insertion Error:", error.message);
       throw error;
@@ -431,6 +439,23 @@ export const useOrderStore = create<OrderState>((set, get) => ({
     if (error) {
       console.error("Error persisting kanban column order:", error.message);
       get().fetchInitialData();
+    }
+  },
+
+  updateSettings: async (updates) => {
+    const dbUpdates: any = {};
+    if (updates.taxRate !== undefined) dbUpdates.tax_rate = updates.taxRate;
+
+    const { error } = await supabase
+      .from('app_settings')
+      .update(dbUpdates)
+      .eq('id', 'default');
+
+    if (error) {
+      console.error("Settings Update Error:", error.message);
+      alert("Failed to update settings");
+    } else {
+      await get().fetchInitialData();
     }
   },
 

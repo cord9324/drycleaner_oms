@@ -131,6 +131,12 @@ const OrderCard: React.FC<{ order: Order, onClick: () => void }> = ({ order, onC
   };
 
   const formatDateShort = (dateStr: string) => {
+    if (!dateStr) return 'N/A';
+    // If it's just a date string (YYYY-MM-DD), parse as local to avoid UTC shift
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+      const [year, month, day] = dateStr.split('-').map(Number);
+      return new Date(year, month - 1, day).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    }
     const d = new Date(dateStr);
     return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   };

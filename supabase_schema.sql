@@ -330,7 +330,34 @@ CREATE TRIGGER on_profile_deleted
   AFTER DELETE ON public.profiles
   FOR EACH ROW EXECUTE FUNCTION public.handle_user_delete();
 
--- 10. INITIAL SEED DATA
+-- 10. APP SETTINGS TABLE
+CREATE TABLE IF NOT EXISTS public.app_settings (
+  id TEXT PRIMARY KEY,
+  tax_rate DECIMAL(5,4) DEFAULT 0.08,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+ALTER TABLE public.app_settings ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "app_settings_select_all" ON public.app_settings;
+CREATE POLICY "app_settings_select_all"
+  ON public.app_settings
+  FOR SELECT
+  TO authenticated
+  USING (true);
+
+DROP POLICY IF EXISTS "app_settings_update_management" ON public.app_settings;
+CREATE POLICY "app_settings_update_management"
+  ON public.app_settings
+  FOR UPDATE
+  TO authenticated
+  USING (public.is_admin_or_manager());
+
+-- 11. INITIAL SEED DATA
+INSERT INTO public.app_settings (id, tax_rate)
+VALUES ('default', 0.08)
+ON CONFLICT (id) DO NOTHING;
+
 INSERT INTO public.stores (id, name, address)
 VALUES 
 ('s1768827068272', '200 Cleaners (SR 200 Location)', '5400 SW College Rd Ste 302, Ocala, FL'),

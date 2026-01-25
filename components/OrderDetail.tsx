@@ -34,6 +34,11 @@ const OrderDetail: React.FC = () => {
 
   const formatDate = (dateStr: string) => {
     if (!dateStr) return 'N/A';
+    // If it's just a date string (YYYY-MM-DD), parse as local to avoid UTC shift
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+      const [year, month, day] = dateStr.split('-').map(Number);
+      return new Date(year, month - 1, day).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    }
     const d = new Date(dateStr);
     return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   };
@@ -111,7 +116,7 @@ const OrderDetail: React.FC = () => {
                 <h4 className="text-xs font-black uppercase text-gray-400 mb-4">Payment Summary</h4>
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm"><span>Subtotal</span><span>${order.subtotal.toFixed(2)}</span></div>
-                  <div className="flex justify-between text-sm"><span>Tax (8%)</span><span>${order.tax.toFixed(2)}</span></div>
+                  <div className="flex justify-between text-sm"><span>Tax</span><span>${order.tax.toFixed(2)}</span></div>
                   <div className="pt-2 border-t border-gray-100 flex justify-between items-center">
                     <span className="text-lg font-black">Total</span>
                     <span className="text-2xl font-black text-primary">${order.total.toFixed(2)}</span>
@@ -215,7 +220,7 @@ const OrderDetail: React.FC = () => {
 
         <div className="space-y-1 pt-2">
           <div className="flex justify-between text-xs"><span>Subtotal</span><span>${order.subtotal.toFixed(2)}</span></div>
-          <div className="flex justify-between text-xs"><span>Tax (8%)</span><span>${order.tax.toFixed(2)}</span></div>
+          <div className="flex justify-between text-xs"><span>Tax</span><span>${order.tax.toFixed(2)}</span></div>
           <div className="flex justify-between text-xl font-black border-t-2 border-black pt-1"><span>TOTAL</span><span>${order.total.toFixed(2)}</span></div>
         </div>
 

@@ -14,7 +14,8 @@ const Settings: React.FC = () => {
     stores, deleteStore,
     users, deleteUser,
     serviceCategories, deleteServiceCategory,
-    kanbanColumns, deleteKanbanColumn, reorderKanbanColumns
+    kanbanColumns, deleteKanbanColumn, reorderKanbanColumns,
+    settings, updateSettings
   } = useOrderStore();
 
   const [activeTab, setActiveTab] = useState('stores');
@@ -40,7 +41,8 @@ const Settings: React.FC = () => {
       { id: 'stores', label: 'Store Locations', roles: ['ADMIN', 'MANAGER'] },
       { id: 'services', label: 'Service Categories', roles: ['ADMIN', 'MANAGER'] },
       { id: 'kanban', label: 'Kanban Board', roles: ['ADMIN'] },
-      { id: 'users', label: 'User Management', roles: ['ADMIN', 'MANAGER'] }
+      { id: 'users', label: 'User Management', roles: ['ADMIN', 'MANAGER'] },
+      { id: 'system', label: 'System Settings', roles: ['ADMIN', 'MANAGER'] }
     ];
     return tabs.filter(t => t.roles.includes(currentUser?.role || 'STAFF'));
   }, [currentUser]);
@@ -262,6 +264,42 @@ const Settings: React.FC = () => {
                   )}
                 </tbody>
               </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'system' && (
+        <div className="animate-in fade-in slide-in-from-bottom-2">
+          <div className="flex justify-between items-center mb-6">
+            <div>
+              <h2 className="text-2xl font-bold text-slate-900 dark:text-white">System Settings</h2>
+              <p className="text-sm text-slate-500">Global application configurations</p>
+            </div>
+          </div>
+          <div className="bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm max-w-2xl">
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Global Tax Rate</label>
+                <div className="flex items-center gap-4">
+                  <div className="relative flex-1 max-w-[200px]">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">%</span>
+                    <input
+                      type="number"
+                      step="0.01"
+                      className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3 pl-8 text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all font-bold"
+                      value={(settings.taxRate * 100).toFixed(1)}
+                      onChange={(e) => {
+                        const val = parseFloat(e.target.value);
+                        if (!isNaN(val)) {
+                          updateSettings({ taxRate: val / 100 });
+                        }
+                      }}
+                    />
+                  </div>
+                  <p className="text-xs text-slate-500 italic">Currently set to {(settings.taxRate * 100).toFixed(1)}%. This applies to all new orders.</p>
+                </div>
+              </div>
             </div>
           </div>
         </div>

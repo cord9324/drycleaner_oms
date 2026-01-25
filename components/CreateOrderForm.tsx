@@ -20,7 +20,8 @@ const CreateOrderForm: React.FC<CreateOrderFormProps> = ({ onClose, onSuccess })
         customers,
         stores,
         serviceCategories,
-        kanbanColumns
+        kanbanColumns,
+        settings
     } = useOrderStore();
 
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -100,7 +101,7 @@ const CreateOrderForm: React.FC<CreateOrderFormProps> = ({ onClose, onSuccess })
                 if (customer) {
                     await updateCustomer(customer.id, {
                         lastOrderDate: now,
-                        totalSpent: (customer.totalSpent || 0) + (calculateSubtotal() * 1.08)
+                        totalSpent: (customer.totalSpent || 0) + (calculateSubtotal() * (1 + settings.taxRate))
                     });
                 }
             }
@@ -108,7 +109,7 @@ const CreateOrderForm: React.FC<CreateOrderFormProps> = ({ onClose, onSuccess })
             if (!customer) throw new Error("Customer missing");
 
             const subtotal = calculateSubtotal();
-            const tax = subtotal * 0.08;
+            const tax = subtotal * settings.taxRate;
             const finalItems = orderItems.map(item => ({
                 ...item,
                 id: item.id!,
@@ -236,7 +237,7 @@ const CreateOrderForm: React.FC<CreateOrderFormProps> = ({ onClose, onSuccess })
             <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex justify-between items-end">
                 <div>
                     <p className="text-[10px] font-bold text-slate-400 uppercase">Estimated Total</p>
-                    <p className="text-2xl font-black text-primary">${(calculateSubtotal() * 1.08).toFixed(2)}</p>
+                    <p className="text-2xl font-black text-primary">${(calculateSubtotal() * (1 + settings.taxRate)).toFixed(2)}</p>
                 </div>
                 <Button type="submit" isLoading={isSubmitting} size="lg">Create Order</Button>
             </div>
