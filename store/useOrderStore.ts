@@ -54,6 +54,7 @@ interface OrderState {
   addServiceCategory: (category: ServiceCategory) => Promise<void>;
   updateServiceCategory: (id: string, updates: Partial<ServiceCategory>) => Promise<void>;
   deleteServiceCategory: (id: string) => Promise<void>;
+  reorderServiceCategories: (startIndex: number, endIndex: number) => Promise<void>;
 
   addKanbanColumn: (column: Omit<KanbanColumn, 'position'>) => Promise<void>;
   updateKanbanColumn: (id: string, updates: Partial<KanbanColumn>) => Promise<void>;
@@ -99,7 +100,7 @@ export const useOrderStore = create<OrderState>((set, get) => ({
         supabase.from('orders').select('*').order('created_at', { ascending: false }),
         supabase.from('customers').select('*'),
         supabase.from('stores').select('*'),
-        supabase.from('service_categories').select('*'),
+        supabase.from('service_categories').select('*').order('position'),
         supabase.from('kanban_columns').select('*').order('position'),
         supabase.from('profiles').select('*'),
         supabase.from('app_settings').select('*').eq('id', 'default').single()
@@ -389,11 +390,13 @@ export const useOrderStore = create<OrderState>((set, get) => ({
   },
 
   addServiceCategory: async (category) => {
+    const position = get().serviceCategories.length;
     const { error } = await supabase.from('service_categories').insert([{
       id: category.id,
       name: category.name,
       service_type: category.serviceType,
-      base_price: category.basePrice
+      base_price: category.basePrice,
+      position
     }]);
     if (!error) get().fetchInitialData();
   },
@@ -408,6 +411,24 @@ export const useOrderStore = create<OrderState>((set, get) => ({
   deleteServiceCategory: async (id) => {
     const { error } = await supabase.from('service_categories').delete().eq('id', id);
     if (!error) get().fetchInitialData();
+  },
+  reorderServiceCategories: async (startIndex, endIndex) => {
+    const result = Array.from(get().serviceCategories);
+    const [removed] = result.splice(startIndex, 1);
+    result.splice(endIndex, 0, removed);
+    set({ serviceCategories: result });
+    const updates = result.map((cat, idx) => ({
+      id: cat.id,
+      name: cat.name,
+      service_type: cat.serviceType,
+      base_price: cat.basePrice,
+      position: idx
+    }));
+    const { error } = await supabase.from('service_categories').upsert(updates);
+    if (error) {
+      console.error("Error persisting service category order:", error.message);
+      get().fetchInitialData();
+    }
   },
 
   addKanbanColumn: async (column) => {

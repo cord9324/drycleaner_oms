@@ -20,6 +20,7 @@ export interface ServiceCategory {
   name: string;
   serviceType: ServiceType;
   basePrice: number;
+  position: number;
 }
 
 export interface KanbanColumn {

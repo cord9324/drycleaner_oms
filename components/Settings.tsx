@@ -13,7 +13,7 @@ const Settings: React.FC = () => {
     currentUser,
     stores, deleteStore,
     users, deleteUser,
-    serviceCategories, deleteServiceCategory,
+    serviceCategories, deleteServiceCategory, reorderServiceCategories,
     kanbanColumns, deleteKanbanColumn, reorderKanbanColumns,
     settings, updateSettings
   } = useOrderStore();
@@ -132,9 +132,17 @@ const Settings: React.FC = () => {
                 <tr><th className="px-6 py-4">Item</th><th className="px-6 py-4">Type</th><th className="px-6 py-4">Price</th><th className="px-6 py-4 text-right">Actions</th></tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                {serviceCategories.map(cat => (
+                {serviceCategories.map((cat, index) => (
                   <tr key={cat.id} className="hover:bg-slate-50 dark:hover:bg-white/[0.01] transition-colors group">
-                    <td className="px-6 py-4 font-bold">{cat.name}</td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="flex flex-col opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button disabled={index === 0} onClick={() => reorderServiceCategories(index, index - 1)} className="material-symbols-outlined text-slate-400 hover:text-primary disabled:opacity-0 text-[18px]">keyboard_arrow_up</button>
+                          <button disabled={index === serviceCategories.length - 1} onClick={() => reorderServiceCategories(index, index + 1)} className="material-symbols-outlined text-slate-400 hover:text-primary disabled:opacity-0 text-[18px]">keyboard_arrow_down</button>
+                        </div>
+                        <span className="font-bold">{cat.name}</span>
+                      </div>
+                    </td>
                     <td className="px-6 py-4"><span className="text-xs font-medium px-2 py-1 bg-slate-100 dark:bg-slate-800 rounded-md">{cat.serviceType}</span></td>
                     <td className="px-6 py-4 text-emerald-500 font-bold">${cat.basePrice.toFixed(2)}</td>
                     <td className="px-6 py-4 text-right">

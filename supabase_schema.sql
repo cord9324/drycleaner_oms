@@ -180,6 +180,7 @@ CREATE TABLE IF NOT EXISTS public.service_categories (
   name TEXT NOT NULL,
   service_type TEXT NOT NULL,
   base_price DECIMAL(10,2) NOT NULL,
+  position INTEGER DEFAULT 0,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
@@ -373,11 +374,11 @@ VALUES
 ('col5', 'On Hold', 'HOLD', 'bg-amber-500', 4)
 ON CONFLICT (status) DO UPDATE SET label = EXCLUDED.label, color = EXCLUDED.color, position = EXCLUDED.position;
 
-INSERT INTO public.service_categories (id, name, service_type, base_price)
+INSERT INTO public.service_categories (id, name, service_type, base_price, position)
 VALUES 
-('sc1', 'Suit (2-Piece)', 'Dry Clean', 15.00),
-('sc2', 'Dress Shirt', 'Launder', 4.50),
-('sc3', 'Evening Gown', 'Dry Clean', 25.00),
-('sc4', 'Hemming', 'Alteration', 12.00),
-('sc5', 'Winter Coat', 'Specialty', 22.50)
+('sc1', 'Suit (2-Piece)', 'Dry Clean', 15.00, 0),
+('sc2', 'Dress Shirt', 'Launder', 4.50, 1),
+('sc3', 'Evening Gown', 'Dry Clean', 25.00, 2),
+('sc4', 'Hemming', 'Alteration', 12.00, 3),
+('sc5', 'Winter Coat', 'Specialty', 22.50, 4)
 ON CONFLICT (id) DO NOTHING;
