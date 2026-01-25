@@ -75,8 +75,8 @@ const CustomerList: React.FC = () => {
 
       switch (sortConfig.key) {
         case 'name':
-          valA = `${a.firstName} ${a.lastName}`.toLowerCase();
-          valB = `${b.firstName} ${b.lastName}`.toLowerCase();
+          valA = `${a.lastName}, ${a.firstName}`.toLowerCase();
+          valB = `${b.lastName}, ${b.firstName}`.toLowerCase();
           break;
         case 'email':
           valA = a.email.toLowerCase();
@@ -205,7 +205,7 @@ const CustomerList: React.FC = () => {
                           {c.firstName[0]}{c.lastName[0]}
                         </div>
                         <div>
-                          <p className="text-sm font-bold text-slate-900 dark:text-white">{c.firstName} {c.lastName}</p>
+                          <p className="text-sm font-bold text-slate-900 dark:text-white">{c.lastName}, {c.firstName}</p>
                           <p className="text-[10px] text-slate-500">ID: #{c.id}</p>
                         </div>
                       </div>
@@ -279,7 +279,7 @@ const CustomerList: React.FC = () => {
       <Modal
         isOpen={isHistoryModalOpen}
         onClose={handleCloseHistoryModal}
-        title={selectedCustomer ? `${selectedCustomer.firstName} ${selectedCustomer.lastName}'s Order History` : 'Order History'}
+        title={selectedCustomer ? `${selectedCustomer.lastName}, ${selectedCustomer.firstName}'s Order History` : 'Order History'}
       >
         <div className="space-y-4">
           {customerOrders.length > 0 ? (
@@ -340,7 +340,7 @@ const CustomerList: React.FC = () => {
           <div>
             <h4 className="text-lg font-bold text-slate-900 dark:text-white">Delete Customer?</h4>
             <p className="text-sm text-slate-500 mt-2">
-              Are you sure you want to delete <span className="font-bold text-slate-900 dark:text-white">{selectedCustomer?.firstName} {selectedCustomer?.lastName}</span>?
+              Are you sure you want to delete <span className="font-bold text-slate-900 dark:text-white">{selectedCustomer?.lastName}, {selectedCustomer?.firstName}</span>?
               This action cannot be undone and will remove all their records.
             </p>
           </div>

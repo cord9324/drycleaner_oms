@@ -131,7 +131,7 @@ const OrderDetail: React.FC = () => {
               <h4 className="text-sm font-bold mb-4">Customer Contact</h4>
               {customer ? (
                 <div className="space-y-1">
-                  <p className="font-bold">{customer.firstName} {customer.lastName}</p>
+                  <p className="font-bold">{customer.lastName}, {customer.firstName}</p>
                   <p className="text-xs text-gray-500">{customer.phone}</p>
                   <p className="text-xs text-gray-500">{customer.email}</p>
                 </div>

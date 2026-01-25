@@ -127,7 +127,7 @@ const CreateOrderForm: React.FC<CreateOrderFormProps> = ({ onClose, onSuccess })
                 orderNumber: `ORD-${Math.floor(1000 + Math.random() * 9000)}`,
                 hangerNumber: hangerNumber.trim() || undefined,
                 customerId: customer.id,
-                customerName: `${customer.firstName} ${customer.lastName}`,
+                customerName: `${customer.lastName}, ${customer.firstName}`,
                 status: initialStatus,
                 items: finalItems,
                 subtotal,
@@ -171,7 +171,7 @@ const CreateOrderForm: React.FC<CreateOrderFormProps> = ({ onClose, onSuccess })
                             required
                             options={customers.map(c => ({
                                 value: c.id,
-                                label: `${c.firstName} ${c.lastName}`,
+                                label: `${c.lastName}, ${c.firstName}`,
                                 subLabel: c.phone
                             }))}
                             value={selectedCustomerId}

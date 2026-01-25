@@ -1,8 +1,8 @@
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useOrderStore } from '../store/useOrderStore';
-import { 
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   Cell, Legend, LineChart, Line, PieChart, Pie
 } from 'recharts';
 // Fixed: Imported OrderStatus from types.ts
@@ -10,42 +10,66 @@ import { ServiceType, OrderStatus } from '../types';
 
 const Analytics: React.FC = () => {
   const { orders, customers } = useOrderStore();
-  
+
+  // Default range: last 7 days
+  const [startDate, setStartDate] = useState(() => {
+    const d = new Date();
+    d.setDate(d.getDate() - 7);
+    return d.toISOString().split('T')[0];
+  });
+  const [endDate, setEndDate] = useState(() => new Date().toISOString().split('T')[0]);
+
+  // Filtered Orders based on date range
+  const filteredOrders = useMemo(() => {
+    const start = new Date(startDate);
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(endDate);
+    end.setHours(23, 59, 59, 999);
+
+    return orders.filter(o => {
+      const orderDate = new Date(o.createdAt);
+      return orderDate >= start && orderDate <= end;
+    });
+  }, [orders, startDate, endDate]);
+
   // 1. Service Breakdown Data (Keeping as requested)
   const serviceBreakdownData = useMemo(() => {
     const services = Object.values(ServiceType);
     return services.map(type => {
-      const revenue = orders.reduce((acc, o) => {
+      const revenue = filteredOrders.reduce((acc, o) => {
         const typeTotal = o.items
           .filter(item => item.serviceType === type)
           .reduce((sum, item) => sum + item.total, 0);
         return acc + typeTotal;
       }, 0);
-      
+
       return {
         name: type,
         revenue: Math.round(revenue)
       };
     }).filter(d => d.revenue > 0);
-  }, [orders]);
+  }, [filteredOrders]);
 
   // 2. Weekly Trend Data (Keeping as requested)
-  const weeklyTrendData = useMemo(() => {
-    const last7Days = [...Array(7)].map((_, i) => {
-      const d = new Date();
-      d.setDate(d.getDate() - (6 - i));
-      return d.toISOString().split('T')[0];
-    });
+  const trendData = useMemo(() => {
+    const dates: string[] = [];
+    const curr = new Date(startDate);
+    const end = new Date(endDate);
 
-    return last7Days.map(day => {
-      const dayOrders = orders.filter(o => o.createdAt.startsWith(day));
+    while (curr <= end) {
+      dates.push(curr.toISOString().split('T')[0]);
+      curr.setDate(curr.getDate() + 1);
+    }
+
+    return dates.map(day => {
+      const dayOrders = filteredOrders.filter(o => o.createdAt.startsWith(day));
       return {
-        date: new Date(day).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+        date: new Date(day + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
         volume: dayOrders.length,
         revenue: Math.round(dayOrders.reduce((acc, o) => acc + o.total, 0))
       };
     });
-  }, [orders]);
+  }, [filteredOrders, startDate, endDate]);
 
   // 3. NEW: Customer Lifetime Value (CLV) Calculations
   const clvData = useMemo(() => {
@@ -87,13 +111,13 @@ const Analytics: React.FC = () => {
         status: (status as string).replace('_', ' '),
         count: orders.filter(o => o.status === status).length,
         // Target capacity is a mock value for comparison
-        capacity: 10 
+        capacity: 10
       }));
-    
+
     // Find the status with the most orders (potential bottleneck)
-    const bottleneck = statusCounts.reduce((prev, current) => 
+    const bottleneck = statusCounts.reduce((prev, current) =>
       (prev.count > current.count) ? prev : current
-    , statusCounts[0] || { status: 'None', count: 0 });
+      , statusCounts[0] || { status: 'None', count: 0 });
 
     return { statusCounts, bottleneck };
   }, [orders]);
@@ -105,12 +129,26 @@ const Analytics: React.FC = () => {
           <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Business Intelligence</h2>
           <p className="text-slate-500 text-sm">Revenue trends, customer health, and operational flow</p>
         </div>
-        <div className="flex gap-2 no-print">
-          <button className="px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors">Last 30 Days</button>
+        <div className="flex items-center gap-3 no-print">
+          <div className="flex items-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-1">
+            <input
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              className="bg-transparent border-none text-xs font-bold p-1 outline-none text-slate-700 dark:text-slate-300"
+            />
+            <span className="text-slate-400 px-1">→</span>
+            <input
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              className="bg-transparent border-none text-xs font-bold p-1 outline-none text-slate-700 dark:text-slate-300"
+            />
+          </div>
           <button className="px-4 py-2 bg-primary text-white rounded-lg text-sm font-bold shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all active:scale-95" onClick={() => window.print()}>
             <span className="flex items-center gap-2">
               <span className="material-symbols-outlined text-sm">ios_share</span>
-              Export Data
+              Export
             </span>
           </button>
         </div>
@@ -128,15 +166,15 @@ const Analytics: React.FC = () => {
               <BarChart data={serviceBreakdownData} layout="vertical">
                 <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} opacity={0.1} />
                 <XAxis type="number" hide />
-                <YAxis 
-                  dataKey="name" 
-                  type="category" 
-                  axisLine={false} 
-                  tickLine={false} 
-                  width={100} 
-                  tick={{ fontSize: 11, fontWeight: 600, fill: '#64748b' }} 
+                <YAxis
+                  dataKey="name"
+                  type="category"
+                  axisLine={false}
+                  tickLine={false}
+                  width={100}
+                  tick={{ fontSize: 11, fontWeight: 600, fill: '#64748b' }}
                 />
-                <Tooltip 
+                <Tooltip
                   cursor={{ fill: 'transparent' }}
                   contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '8px', color: '#fff' }}
                 />
@@ -158,12 +196,12 @@ const Analytics: React.FC = () => {
           </div>
           <div className="h-72 w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={weeklyTrendData}>
+              <LineChart data={trendData}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.1} />
                 <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#64748b' }} />
                 <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#64748b' }} />
-                <Tooltip 
-                   contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '8px', color: '#fff' }}
+                <Tooltip
+                  contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '8px', color: '#fff' }}
                 />
                 <Legend iconType="circle" wrapperStyle={{ fontSize: '11px', paddingTop: '20px' }} />
                 <Line type="monotone" dataKey="revenue" name="Revenue ($)" stroke="#137fec" strokeWidth={3} dot={{ r: 4, fill: '#137fec' }} activeDot={{ r: 6 }} />
@@ -181,9 +219,9 @@ const Analytics: React.FC = () => {
             <h4 className="text-sm font-black uppercase tracking-widest text-slate-400">Customer Lifetime Value</h4>
           </div>
           <div className="flex-1 flex flex-col justify-center items-center text-center py-4 border-b border-slate-100 dark:border-slate-800 mb-4">
-             <p className="text-xs text-slate-500 mb-1">AVERAGE CLV</p>
-             <h3 className="text-4xl font-black text-primary">${clvData.avgCLV.toLocaleString()}</h3>
-             <p className="text-[10px] text-emerald-500 mt-1 font-bold">+12.4% vs Previous Period</p>
+            <p className="text-xs text-slate-500 mb-1">AVERAGE CLV</p>
+            <h3 className="text-4xl font-black text-primary">${clvData.avgCLV.toLocaleString()}</h3>
+            <p className="text-[10px] text-emerald-500 mt-1 font-bold">+12.4% vs Previous Period</p>
           </div>
           <div className="space-y-3">
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Top Contributors</p>
@@ -222,12 +260,12 @@ const Analytics: React.FC = () => {
             </ResponsiveContainer>
           </div>
           <div className="grid grid-cols-3 gap-2 mt-2">
-             {churnData.map((d, i) => (
-               <div key={i} className="text-center">
-                  <p className="text-[9px] font-bold text-slate-500 uppercase">{d.name}</p>
-                  <p className="text-sm font-black" style={{ color: d.color }}>{d.value}</p>
-               </div>
-             ))}
+            {churnData.map((d, i) => (
+              <div key={i} className="text-center">
+                <p className="text-[9px] font-bold text-slate-500 uppercase">{d.name}</p>
+                <p className="text-sm font-black" style={{ color: d.color }}>{d.value}</p>
+              </div>
+            ))}
           </div>
         </div>
 
@@ -250,9 +288,9 @@ const Analytics: React.FC = () => {
                   <span className="text-slate-900 dark:text-white">{s.count}/10 Units</span>
                 </div>
                 <div className="w-full h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                  <div 
-                    className={`h-full transition-all duration-500 ${s.count > 7 ? 'bg-red-500' : s.count > 4 ? 'bg-amber-500' : 'bg-primary'}`} 
-                    style={{ width: `${Math.min((s.count / 10) * 100, 100)}%` }} 
+                  <div
+                    className={`h-full transition-all duration-500 ${s.count > 7 ? 'bg-red-500' : s.count > 4 ? 'bg-amber-500' : 'bg-primary'}`}
+                    style={{ width: `${Math.min((s.count / 10) * 100, 100)}%` }}
                   />
                 </div>
               </div>
