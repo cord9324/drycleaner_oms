@@ -148,7 +148,14 @@ export const useOrderStore = create<OrderState>((set, get) => ({
           createdAt: c.created_at,
           lastOrderDate: c.last_order_date
         })),
-        stores: storesRes.data || [],
+        stores: (storesRes.data || []).map(s => ({
+          id: s.id,
+          name: s.name,
+          address: s.address,
+          phone: s.phone,
+          qzEnabled: s.qz_enabled,
+          qzPrinterName: s.qz_printer_name
+        })),
         serviceCategories: (servicesRes.data || []).map(s => ({
           ...s,
           serviceType: s.service_type,
@@ -343,15 +350,37 @@ export const useOrderStore = create<OrderState>((set, get) => ({
   },
 
   addStore: async (store) => {
-    const { error } = await supabase.from('stores').insert([store]);
-    if (!error) get().fetchInitialData();
-  },
-  updateStore: async (id, updates) => {
-    const { error } = await supabase.from('stores').update(updates).eq('id', id);
+    const { error } = await supabase.from('stores').insert([{
+      id: store.id,
+      name: store.name,
+      address: store.address,
+      phone: store.phone,
+      qz_enabled: store.qzEnabled,
+      qz_printer_name: store.qzPrinterName
+    }]);
     if (!error) get().fetchInitialData();
   },
   deleteStore: async (id) => {
     const { error } = await supabase.from('stores').delete().eq('id', id);
+    if (!error) get().fetchInitialData();
+  },
+
+  updateStore: async (id, updates) => {
+    const dbUpdates: any = { ...updates };
+    if (updates.qzEnabled !== undefined) {
+      dbUpdates.qz_enabled = updates.qzEnabled;
+      delete dbUpdates.qzEnabled;
+    }
+    if (updates.qzPrinterName !== undefined) {
+      dbUpdates.qz_printer_name = updates.qzPrinterName;
+      delete dbUpdates.qzPrinterName;
+    }
+
+    const { error } = await supabase
+      .from('stores')
+      .update(dbUpdates)
+      .eq('id', id);
+
     if (!error) get().fetchInitialData();
   },
 

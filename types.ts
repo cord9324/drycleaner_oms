@@ -78,6 +78,9 @@ export interface Store {
   id: string;
   name: string;
   address: string;
+  phone: string;
+  qzEnabled: boolean;
+  qzPrinterName: string;
 }
 
 export interface User {

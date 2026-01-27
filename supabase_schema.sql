@@ -112,6 +112,9 @@ CREATE TABLE IF NOT EXISTS public.stores (
   id TEXT PRIMARY KEY,
   name TEXT NOT NULL,
   address TEXT,
+  phone TEXT,
+  qz_enabled BOOLEAN DEFAULT FALSE,
+  qz_printer_name TEXT DEFAULT 'Receipt',
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 

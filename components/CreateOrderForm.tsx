@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useOrderStore } from '../store/useOrderStore';
 import { Button } from './ui/Button';
 import Combobox from './ui/Combobox';
-import { ServiceType, OrderItem, Customer } from '../types';
+import { ServiceType, OrderItem, Customer, Order } from '../types';
+import { qzService } from '../lib/qz-print';
 
 interface CreateOrderFormProps {
     onClose: () => void;
@@ -122,7 +123,7 @@ const CreateOrderForm: React.FC<CreateOrderFormProps> = ({ onClose, onSuccess })
 
             const initialStatus = kanbanColumns.length > 0 ? kanbanColumns[0].status : 'RECEIVED';
 
-            await addOrder({
+            const newOrder: Order = {
                 id: Math.random().toString(36).substr(2, 9),
                 orderNumber: `ORD-${Math.floor(1000 + Math.random() * 9000)}`,
                 hangerNumber: hangerNumber.trim() || undefined,
@@ -139,7 +140,17 @@ const CreateOrderForm: React.FC<CreateOrderFormProps> = ({ onClose, onSuccess })
                 isPriority,
                 storeId: selectedStoreId || stores[0]?.id || 's1',
                 specialHandling: specialHandling.trim()
-            });
+            };
+
+            await addOrder(newOrder);
+
+            // Trigger Silent Printing
+            const currentStore = stores.find(s => s.id === newOrder.storeId);
+            if (currentStore && currentStore.qzEnabled) {
+                qzService.printReceipt(newOrder, currentStore, settings, customer).catch(err => {
+                    console.error("Silent printing failed:", err);
+                });
+            }
 
             if (onSuccess) {
                 onSuccess();
