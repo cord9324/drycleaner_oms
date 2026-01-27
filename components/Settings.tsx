@@ -341,6 +341,23 @@ const Settings: React.FC = () => {
                   </div>
                 </div>
               </div>
+
+              <div className="space-y-4 pt-4 border-t border-slate-100 dark:border-slate-800">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="text-sm font-bold text-slate-900 dark:text-white">Silent Printing Security</h4>
+                    <p className="text-[10px] text-slate-500 font-medium mt-1 uppercase tracking-tight">Trust anchor for QZ Tray Handshakes</p>
+                  </div>
+                  <a
+                    href="/qz-digital-certificate.txt"
+                    download="qz-digital-certificate.txt"
+                    className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-slate-200 dark:hover:bg-slate-700 transition-all border border-slate-200 dark:border-slate-700"
+                  >
+                    <span className="material-symbols-outlined text-sm">download</span>
+                    Download Cert
+                  </a>
+                </div>
+              </div>
             </div>
           </div>
         </div>

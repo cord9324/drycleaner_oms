@@ -23,3 +23,6 @@ dist-ssr
 *.sln
 *.sw?
 .agent/*
+
+# QZ Tray Security Assets
+qz-keys/

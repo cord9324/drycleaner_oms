@@ -13,6 +13,13 @@ class QZService {
         if (this.connected && qz.websocket.isActive()) return;
         try {
             console.log("Connecting to QZ Tray...");
+
+            // Initialize digital signatures if not already set
+            if (!this.connected) {
+                const { setupQZSecurity } = await import('./qz-security');
+                await setupQZSecurity();
+            }
+
             if (!qz.websocket.isActive()) {
                 await qz.websocket.connect();
             }

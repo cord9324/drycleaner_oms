@@ -90,3 +90,46 @@ In your GitHub repository, go to **Settings** > **Secrets and Variables** > **Ac
 - **Zero Server Maintenance**: No backend to patch or scale.
 - **DDoS Protection**: CloudFront handles the traffic spikes.
 - **Cost**: S3 and CloudFront are free-tier eligible. For a small business, monthly costs are typically < $0.50 USD.
+
+---
+
+## 5. Silent Printing Setup (QZ Tray Trust)
+
+To enable silent printing without recurring confirmation dialogs, the application uses digital signatures through a Supabase Edge Function.
+
+### Step A: Generate RSA Keys
+Generate the required private key and public certificate locally:
+```bash
+node scripts/generate-qz-keys.cjs
+```
+This creates a `qz-keys/` directory containing:
+- `qz-private-key.pem`: Your secret key (used by the cloud signer).
+- `qz-digital-certificate.txt`: Your public certificate for QZ Tray.
+
+### Step B: Supabase Edge Function Setup
+
+The serverless signer ensures your private key is never exposed to the internet.
+
+1.  **Initialize Supabase CLI**: If you haven't already, run `supabase login` and `supabase link --project-ref your-project-id`.
+2.  **Set the Cloud Secret**: This command uploads the private key generated in Step A to Suapbase's secure vault:
+    ```powershell
+    # Windows (PowerShell)
+    $key = Get-Content qz-keys/qz-private-key.pem -Raw
+    supabase secrets set QZ_PRIVATE_KEY="$key"
+    ```
+3.  **Deploy Signer**:
+    ```bash
+    supabase functions deploy qz-sign --no-verify-jwt
+    ```
+    *Note: The `--no-verify-jwt` flag is recommended for this specific function to ensure the QZ Tray handshake succeeds even if the frontend session is momentarily refreshing.*
+
+### Step C: QZ Tray Configuration
+1. Open **QZ Tray** > **Advanced** > **Site Manager**.
+2. Click the **Plus (+)** button or drag and drop `qz-keys/qz-digital-certificate.txt` into the window.
+3. **Local Trust**: QZ Tray should now show your domain (e.g. `localhost` or `your-site.com`) as trusted.
+
+### Step D: Deployment to S3/CloudFront
+When you run `npm run build`, the `public/qz-digital-certificate.txt` file is automatically copied to the root of the `dist/` folder.
+1.  **Sync**: Ensure your S3 deployment command includes all files in the root of `dist/` (not just the `assets/` folder).
+2.  **Verification**: After deploying, you should be able to visit `https://your-site.com/qz-digital-certificate.txt` in your browser.
+3.  **Cloud Trust**: You will need to repeat **Step C** inside QZ Tray for your production domain the first time you use it.
