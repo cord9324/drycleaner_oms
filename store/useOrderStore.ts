@@ -77,7 +77,12 @@ export const useOrderStore = create<OrderState>((set, get) => ({
   timeLogs: [],
   currentUser: null,
   session: null,
-  settings: { taxRate: 0.08 },
+  settings: {
+    taxRate: 0.08,
+    companyName: 'DryClean Pro',
+    companyAddress: '100 Central Plaza',
+    companyPhone: '(555) 012-3456'
+  },
   loading: false,
   searchQuery: '',
   locationFilter: 'all',
@@ -151,7 +156,17 @@ export const useOrderStore = create<OrderState>((set, get) => ({
         })),
         kanbanColumns: columnsRes.data || [],
         users: fetchedUsers,
-        settings: settingsRes.data ? { taxRate: parseFloat(settingsRes.data.tax_rate) } : { taxRate: 0.08 },
+        settings: settingsRes.data ? {
+          taxRate: parseFloat(settingsRes.data.tax_rate),
+          companyName: settingsRes.data.company_name,
+          companyAddress: settingsRes.data.company_address,
+          companyPhone: settingsRes.data.company_phone
+        } : {
+          taxRate: 0.08,
+          companyName: 'DryClean Pro',
+          companyAddress: '100 Central Plaza',
+          companyPhone: '(555) 012-3456'
+        },
         loading: false
       });
 
@@ -466,6 +481,9 @@ export const useOrderStore = create<OrderState>((set, get) => ({
   updateSettings: async (updates) => {
     const dbUpdates: any = {};
     if (updates.taxRate !== undefined) dbUpdates.tax_rate = updates.taxRate;
+    if (updates.companyName !== undefined) dbUpdates.company_name = updates.companyName;
+    if (updates.companyAddress !== undefined) dbUpdates.company_address = updates.companyAddress;
+    if (updates.companyPhone !== undefined) dbUpdates.company_phone = updates.companyPhone;
 
     const { error } = await supabase
       .from('app_settings')

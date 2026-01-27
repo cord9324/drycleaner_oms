@@ -98,4 +98,7 @@ export interface TimeLog {
 
 export interface AppSettings {
   taxRate: number;
+  companyName: string;
+  companyAddress: string;
+  companyPhone: string;
 }

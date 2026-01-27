@@ -308,6 +308,39 @@ const Settings: React.FC = () => {
                   <p className="text-xs text-slate-500 italic">Currently set to {(settings.taxRate * 100).toFixed(1)}%. This applies to all new orders.</p>
                 </div>
               </div>
+
+              <div className="space-y-4 pt-4 border-t border-slate-100 dark:border-slate-800">
+                <h4 className="text-sm font-bold text-slate-900 dark:text-white">Receipt Branding & Contact</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Company Name</label>
+                    <input
+                      type="text"
+                      className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all font-bold"
+                      value={settings.companyName}
+                      onChange={(e) => updateSettings({ companyName: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Company Phone</label>
+                    <input
+                      type="text"
+                      className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all font-bold"
+                      value={settings.companyPhone}
+                      onChange={(e) => updateSettings({ companyPhone: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-1 md:col-span-2">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Store Address (Display Only)</label>
+                    <input
+                      type="text"
+                      className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all font-bold"
+                      value={settings.companyAddress}
+                      onChange={(e) => updateSettings({ companyAddress: e.target.value })}
+                    />
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>

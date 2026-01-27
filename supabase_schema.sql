@@ -335,6 +335,9 @@ CREATE TRIGGER on_profile_deleted
 CREATE TABLE IF NOT EXISTS public.app_settings (
   id TEXT PRIMARY KEY,
   tax_rate DECIMAL(5,4) DEFAULT 0.08,
+  company_name TEXT DEFAULT 'DryClean Pro',
+  company_address TEXT DEFAULT '100 Central Plaza',
+  company_phone TEXT DEFAULT '(555) 012-3456',
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
@@ -355,8 +358,8 @@ CREATE POLICY "app_settings_update_management"
   USING (public.is_admin_or_manager());
 
 -- 11. INITIAL SEED DATA
-INSERT INTO public.app_settings (id, tax_rate)
-VALUES ('default', 0.08)
+INSERT INTO public.app_settings (id, tax_rate, company_name, company_address, company_phone)
+VALUES ('default', 0.08, 'DryClean Pro', '100 Central Plaza', '(555) 012-3456')
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO public.stores (id, name, address)
