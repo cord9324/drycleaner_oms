@@ -9,7 +9,7 @@ interface EditOrderFormProps {
 }
 
 const EditOrderForm: React.FC<EditOrderFormProps> = ({ order, onClose, onSuccess }) => {
-    const { updateOrder, serviceCategories } = useOrderStore();
+    const { updateOrder, serviceCategories, settings } = useOrderStore();
 
     const [items, setItems] = useState<OrderItem[]>([...order.items]);
     const [priority, setPriority] = useState(order.isPriority);
@@ -56,7 +56,7 @@ const EditOrderForm: React.FC<EditOrderFormProps> = ({ order, onClose, onSuccess
     const handleSave = (e: React.FormEvent) => {
         e.preventDefault();
         const subtotal = items.reduce((acc, i) => acc + i.total, 0);
-        const tax = subtotal * 0.08;
+        const tax = subtotal * settings.taxRate;
 
         updateOrder(order.id, {
             items: items,
