@@ -306,6 +306,7 @@ export const useOrderStore = create<OrderState>((set, get) => ({
     if (updates.pickupTime) dbUpdates.pickup_time = updates.pickupTime;
     if (updates.isPriority !== undefined) dbUpdates.is_priority = updates.isPriority;
     if (updates.specialHandling !== undefined) dbUpdates.special_handling = updates.specialHandling;
+    if (updates.storeId) dbUpdates.store_id = updates.storeId;
 
     const { error } = await supabase.from('orders').update(dbUpdates).eq('id', orderId);
     if (error) console.error("Order Update Error:", error.message);

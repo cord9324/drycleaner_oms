@@ -9,7 +9,7 @@ interface EditOrderFormProps {
 }
 
 const EditOrderForm: React.FC<EditOrderFormProps> = ({ order, onClose, onSuccess }) => {
-    const { updateOrder, serviceCategories, settings } = useOrderStore();
+    const { updateOrder, serviceCategories, settings, stores } = useOrderStore();
 
     const [items, setItems] = useState<OrderItem[]>([...order.items]);
     const [priority, setPriority] = useState(order.isPriority);
@@ -17,6 +17,7 @@ const EditOrderForm: React.FC<EditOrderFormProps> = ({ order, onClose, onSuccess
     const [pickupDate, setPickupDate] = useState(order.pickupDate);
     const [pickupTime, setPickupTime] = useState(order.pickupTime || '17:00');
     const [specialHandling, setSpecialHandling] = useState(order.specialHandling || '');
+    const [selectedStoreId, setSelectedStoreId] = useState(order.storeId);
 
     const handleItemChange = (itemId: string, field: string, value: any) => {
         setItems(items.map(item => {
@@ -65,6 +66,7 @@ const EditOrderForm: React.FC<EditOrderFormProps> = ({ order, onClose, onSuccess
             pickupDate: pickupDate,
             pickupTime: pickupTime,
             specialHandling: specialHandling,
+            storeId: selectedStoreId,
             subtotal,
             tax,
             total: subtotal + tax
@@ -84,6 +86,24 @@ const EditOrderForm: React.FC<EditOrderFormProps> = ({ order, onClose, onSuccess
                 <div>
                     <label className="text-xs font-bold uppercase text-slate-500 mb-1 block">Expedite</label>
                     <div className="flex items-center gap-3 bg-amber-50 dark:bg-amber-900/10 p-2.5 rounded-lg border border-amber-200 h-[46px]"><input type="checkbox" id="editPriority" checked={priority} onChange={e => setPriority(e.target.checked)} /><label htmlFor="editPriority" className="text-xs font-bold text-amber-600">Priority</label></div>
+                </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-4">
+                <div>
+                    <label className="text-xs font-bold uppercase text-slate-500 mb-1 block">Store Location</label>
+                    <select
+                        required
+                        className="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary/20"
+                        value={selectedStoreId}
+                        onChange={e => setSelectedStoreId(e.target.value)}
+                    >
+                        {stores.map(store => (
+                            <option key={store.id} value={store.id}>
+                                {store.name}
+                            </option>
+                        ))}
+                    </select>
                 </div>
             </div>
 
