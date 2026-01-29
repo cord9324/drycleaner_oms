@@ -147,9 +147,21 @@ const CreateOrderForm: React.FC<CreateOrderFormProps> = ({ onClose, onSuccess })
             // Trigger Silent Printing
             const currentStore = stores.find(s => s.id === newOrder.storeId);
             if (currentStore && currentStore.qzEnabled) {
-                qzService.printReceipt(newOrder, currentStore, settings, customer).catch(err => {
-                    console.error("Silent printing failed:", err);
-                });
+                // Background task to handle printing sequentially
+                const runPrinting = async () => {
+                    try {
+                        console.log("Starting sequential printing...");
+                        // Print Claim Ticket first
+                        await qzService.printClaimTicket(newOrder, currentStore, settings, customer);
+                        // Then Print Receipt
+                        await qzService.printReceipt(newOrder, currentStore, settings, customer);
+                        console.log("Sequential printing completed.");
+                    } catch (err) {
+                        console.error("Printing sequence failed:", err);
+                    }
+                };
+
+                runPrinting();
             }
 
             if (onSuccess) {

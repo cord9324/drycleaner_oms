@@ -6,6 +6,8 @@ import Modal from './Modal';
 import EditOrderForm from './EditOrderForm';
 import { OrderItem, ServiceType } from '../types';
 import { Receipt } from './Receipt';
+import { ClaimTicket } from './ClaimTicket';
+import { qzService } from '../lib/qz-print';
 
 const OrderDetail: React.FC = () => {
   const { id } = useParams();
@@ -17,12 +19,21 @@ const OrderDetail: React.FC = () => {
 
   const [isStatusModalOpen, setStatusModalOpen] = useState(false);
   const [isEditModalOpen, setEditModalOpen] = useState(false);
+  const [printType, setPrintType] = useState<'receipt' | 'claim'>('receipt');
 
   if (!order) return <div className="p-8">Order not found.</div>;
 
   const handleUpdateStatus = (newStatus: string) => {
     updateOrderStatus(order.id, newStatus);
     setStatusModalOpen(false);
+  };
+
+  const handleBrowserPrint = (type: 'receipt' | 'claim') => {
+    setPrintType(type);
+    // Use setTimeout to ensure React has rendered the correct print component
+    setTimeout(() => {
+      window.print();
+    }, 100);
   };
 
   const formatTime = (timeStr: string) => {
@@ -73,7 +84,10 @@ const OrderDetail: React.FC = () => {
             <button onClick={() => setStatusModalOpen(true)} className="flex items-center justify-center gap-2 px-4 h-11 bg-gray-100 dark:bg-[#283039] text-gray-900 dark:text-white rounded-lg font-bold hover:bg-gray-200 transition-all">
               <span className="material-symbols-outlined">sync</span> <span>Status</span>
             </button>
-            <button onClick={() => window.print()} className="flex items-center justify-center gap-2 px-6 h-11 bg-primary text-white rounded-lg font-bold shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all">
+            <button onClick={() => handleBrowserPrint('claim')} className="flex items-center justify-center gap-2 px-4 h-11 bg-amber-100 dark:bg-amber-900/20 text-amber-700 dark:text-amber-500 rounded-lg font-bold hover:bg-amber-200 transition-all">
+              <span className="material-symbols-outlined">confirmation_number</span> <span>Claim Ticket</span>
+            </button>
+            <button onClick={() => handleBrowserPrint('receipt')} className="flex items-center justify-center gap-2 px-6 h-11 bg-primary text-white rounded-lg font-bold shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all">
               <span className="material-symbols-outlined">print</span> <span>Print Ticket</span>
             </button>
           </div>
@@ -172,7 +186,11 @@ const OrderDetail: React.FC = () => {
 
       {/* --- PRINT LAYOUT --- */}
       <div className="hidden print:block">
-        <Receipt order={order} customer={customer} settings={settings} store={store} />
+        {printType === 'receipt' ? (
+          <Receipt order={order} customer={customer} settings={settings} store={store} />
+        ) : (
+          <ClaimTicket order={order} customer={customer} settings={settings} store={store} />
+        )}
       </div>
 
       {/* --- MODALS --- */}
