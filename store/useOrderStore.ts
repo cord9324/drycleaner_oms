@@ -62,6 +62,7 @@ interface OrderState {
   reorderKanbanColumns: (startIndex: number, endIndex: number) => Promise<void>;
 
   updateSettings: (updates: Partial<AppSettings>) => Promise<void>;
+  getNextOrderNumber: () => Promise<string>;
 
   setSearchQuery: (query: string) => void;
   setLocationFilter: (locationId: string) => void;
@@ -79,6 +80,7 @@ export const useOrderStore = create<OrderState>((set, get) => ({
   session: null,
   settings: {
     taxRate: 0.08,
+    orderPrefix: 'ORD-',
     companyName: 'DryClean Pro',
     companyAddress: '100 Central Plaza',
     companyPhone: '(555) 012-3456'
@@ -165,11 +167,13 @@ export const useOrderStore = create<OrderState>((set, get) => ({
         users: fetchedUsers,
         settings: settingsRes.data ? {
           taxRate: parseFloat(settingsRes.data.tax_rate),
+          orderPrefix: settingsRes.data.order_prefix || 'ORD-',
           companyName: settingsRes.data.company_name,
           companyAddress: settingsRes.data.company_address,
           companyPhone: settingsRes.data.company_phone
         } : {
           taxRate: 0.08,
+          orderPrefix: 'ORD-',
           companyName: 'DryClean Pro',
           companyAddress: '100 Central Plaza',
           companyPhone: '(555) 012-3456'
@@ -511,6 +515,7 @@ export const useOrderStore = create<OrderState>((set, get) => ({
   updateSettings: async (updates) => {
     const dbUpdates: any = {};
     if (updates.taxRate !== undefined) dbUpdates.tax_rate = updates.taxRate;
+    if (updates.orderPrefix !== undefined) dbUpdates.order_prefix = updates.orderPrefix;
     if (updates.companyName !== undefined) dbUpdates.company_name = updates.companyName;
     if (updates.companyAddress !== undefined) dbUpdates.company_address = updates.companyAddress;
     if (updates.companyPhone !== undefined) dbUpdates.company_phone = updates.companyPhone;
@@ -526,6 +531,16 @@ export const useOrderStore = create<OrderState>((set, get) => ({
     } else {
       await get().fetchInitialData();
     }
+  },
+
+  getNextOrderNumber: async () => {
+    const { data, error } = await supabase.rpc('get_next_order_number');
+    if (error) {
+      console.error("Error fetching next order number:", error.message);
+      // Fallback logic if RPC fails
+      return `ORD-${Math.floor(100000 + Math.random() * 900000)}`;
+    }
+    return data;
   },
 
   setSearchQuery: (searchQuery) => set({ searchQuery }),

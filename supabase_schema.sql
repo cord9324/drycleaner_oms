@@ -341,8 +341,25 @@ CREATE TABLE IF NOT EXISTS public.app_settings (
   company_name TEXT DEFAULT 'DryClean Pro',
   company_address TEXT DEFAULT '100 Central Plaza',
   company_phone TEXT DEFAULT '(555) 012-3456',
+  order_prefix TEXT DEFAULT 'ORD-',
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
+-- Create a sequence for order numbers starting at 100,000
+CREATE SEQUENCE IF NOT EXISTS public.order_number_seq START 100000;
+
+-- Create RPC function to get the next sequential order number with prefix
+CREATE OR REPLACE FUNCTION public.get_next_order_number()
+RETURNS TEXT AS $$
+DECLARE
+  prefix TEXT;
+  seq_val BIGINT;
+BEGIN
+  SELECT order_prefix INTO prefix FROM public.app_settings WHERE id = 'default';
+  SELECT nextval('public.order_number_seq') INTO seq_val;
+  RETURN COALESCE(prefix, '') || seq_val::TEXT;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
 
 ALTER TABLE public.app_settings ENABLE ROW LEVEL SECURITY;
 
@@ -361,9 +378,9 @@ CREATE POLICY "app_settings_update_management"
   USING (public.is_admin_or_manager());
 
 -- 11. INITIAL SEED DATA
-INSERT INTO public.app_settings (id, tax_rate, company_name, company_address, company_phone)
-VALUES ('default', 0.08, 'DryClean Pro', '100 Central Plaza', '(555) 012-3456')
-ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.app_settings (id, tax_rate, company_name, company_address, company_phone, order_prefix)
+VALUES ('default', 0.08, 'DryClean Pro', '100 Central Plaza', '(555) 012-3456', 'ORD-')
+ON CONFLICT (id) DO UPDATE SET order_prefix = EXCLUDED.order_prefix;
 
 INSERT INTO public.stores (id, name, address)
 VALUES 

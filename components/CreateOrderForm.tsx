@@ -22,7 +22,8 @@ const CreateOrderForm: React.FC<CreateOrderFormProps> = ({ onClose, onSuccess })
         stores,
         serviceCategories,
         kanbanColumns,
-        settings
+        settings,
+        getNextOrderNumber
     } = useOrderStore();
 
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -122,10 +123,11 @@ const CreateOrderForm: React.FC<CreateOrderFormProps> = ({ onClose, onSuccess })
             })) as OrderItem[];
 
             const initialStatus = kanbanColumns.length > 0 ? kanbanColumns[0].status : 'RECEIVED';
+            const sequentialOrderNumber = await getNextOrderNumber();
 
             const newOrder: Order = {
                 id: Math.random().toString(36).substr(2, 9),
-                orderNumber: `ORD-${Math.floor(1000 + Math.random() * 9000)}`,
+                orderNumber: sequentialOrderNumber,
                 hangerNumber: hangerNumber.trim() || undefined,
                 customerId: customer.id,
                 customerName: `${customer.lastName}, ${customer.firstName}`,
