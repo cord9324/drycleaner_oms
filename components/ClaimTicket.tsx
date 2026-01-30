@@ -43,25 +43,25 @@ export const ClaimTicket: React.FC<ClaimTicketProps> = ({ order, customer, setti
 
             <div className="flex justify-between py-2 border-b border-black">
                 <div>
-                    <p className="text-[10px] font-bold uppercase text-black opacity-60">Order #</p>
+                    <p className="text-[10px] font-bold uppercase text-black">Order #</p>
                     <h2 className="text-2xl font-black text-black">{order.orderNumber}</h2>
                 </div>
                 <div className="text-right">
-                    <p className="text-[10px] font-bold uppercase text-black opacity-60">Created</p>
+                    <p className="text-[10px] font-bold uppercase text-black">Created</p>
                     <p className="text-xs font-bold text-black">{new Date(order.createdAt).toLocaleDateString()}</p>
                 </div>
             </div>
 
 
-            <div className="border-2 border-black p-3 rounded text-center bg-black">
-                <p className="text-[10px] font-bold uppercase text-white opacity-90">Ready for Pickup</p>
-                <p className="text-xl font-black uppercase text-white">{formatDate(order.pickupDate)} @ {formatTime(order.pickupTime)}</p>
+            <div className="border-2 border-black p-3 rounded text-center bg-white">
+                <p className="text-[10px] font-bold uppercase text-black">Ready for Pickup</p>
+                <p className="text-xl font-black uppercase text-black">{formatDate(order.pickupDate)} @ {formatTime(order.pickupTime)}</p>
             </div>
 
             {order.hangerNumber && (
-                <div className="text-center bg-slate-100 p-2 rounded">
-                    <p className="text-[10px] font-black uppercase opacity-60">Hanger Number</p>
-                    <p className="text-2xl font-black">{order.hangerNumber}</p>
+                <div className="text-center bg-white border border-black p-2 rounded">
+                    <p className="text-[10px] font-black uppercase text-black">Hanger Number</p>
+                    <p className="text-2xl font-black text-black">{order.hangerNumber}</p>
                 </div>
             )}
 
