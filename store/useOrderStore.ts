@@ -81,6 +81,7 @@ export const useOrderStore = create<OrderState>((set, get) => ({
   settings: {
     taxRate: 0.08,
     orderPrefix: 'ORD-',
+    defaultPickupTime: '17:00',
     companyName: 'DryClean Pro',
     companyAddress: '100 Central Plaza',
     companyPhone: '(555) 012-3456'
@@ -168,12 +169,14 @@ export const useOrderStore = create<OrderState>((set, get) => ({
         settings: settingsRes.data ? {
           taxRate: parseFloat(settingsRes.data.tax_rate),
           orderPrefix: settingsRes.data.order_prefix || 'ORD-',
+          defaultPickupTime: settingsRes.data.default_pickup_time || '17:00',
           companyName: settingsRes.data.company_name,
           companyAddress: settingsRes.data.company_address,
           companyPhone: settingsRes.data.company_phone
         } : {
           taxRate: 0.08,
           orderPrefix: 'ORD-',
+          defaultPickupTime: '17:00',
           companyName: 'DryClean Pro',
           companyAddress: '100 Central Plaza',
           companyPhone: '(555) 012-3456'
@@ -516,6 +519,7 @@ export const useOrderStore = create<OrderState>((set, get) => ({
     const dbUpdates: any = {};
     if (updates.taxRate !== undefined) dbUpdates.tax_rate = updates.taxRate;
     if (updates.orderPrefix !== undefined) dbUpdates.order_prefix = updates.orderPrefix;
+    if (updates.defaultPickupTime !== undefined) dbUpdates.default_pickup_time = updates.defaultPickupTime;
     if (updates.companyName !== undefined) dbUpdates.company_name = updates.companyName;
     if (updates.companyAddress !== undefined) dbUpdates.company_address = updates.companyAddress;
     if (updates.companyPhone !== undefined) dbUpdates.company_phone = updates.companyPhone;

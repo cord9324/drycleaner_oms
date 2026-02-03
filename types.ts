@@ -102,6 +102,7 @@ export interface TimeLog {
 export interface AppSettings {
   taxRate: number;
   orderPrefix: string;
+  defaultPickupTime: string;
   companyName: string;
   companyAddress: string;
   companyPhone: string;

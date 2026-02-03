@@ -38,7 +38,7 @@ const CreateOrderForm: React.FC<CreateOrderFormProps> = ({ onClose, onSuccess })
     ]);
     const [isPriority, setIsPriority] = useState(false);
     const [pickupDate, setPickupDate] = useState(new Date(Date.now() + 86400000 * 2).toISOString().split('T')[0]);
-    const [pickupTime, setPickupTime] = useState('17:00');
+    const [pickupTime, setPickupTime] = useState(settings.defaultPickupTime || '17:00');
     const [specialHandling, setSpecialHandling] = useState('');
 
     useEffect(() => {

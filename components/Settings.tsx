@@ -309,6 +309,21 @@ const Settings: React.FC = () => {
                 </div>
               </div>
 
+              <div className="space-y-2">
+                <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Default Pickup Time</label>
+                <div className="flex items-center gap-4">
+                  <div className="relative flex-1 max-w-[200px]">
+                    <input
+                      type="time"
+                      className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all font-bold"
+                      value={settings.defaultPickupTime}
+                      onChange={(e) => updateSettings({ defaultPickupTime: e.target.value })}
+                    />
+                  </div>
+                  <p className="text-xs text-slate-500 italic">Sets the initial pickup time for new orders.</p>
+                </div>
+              </div>
+
               <div className="space-y-4 pt-4 border-t border-slate-100 dark:border-slate-800">
                 <h4 className="text-sm font-bold text-slate-900 dark:text-white">Order Settings & Branding</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

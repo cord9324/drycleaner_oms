@@ -342,6 +342,7 @@ CREATE TABLE IF NOT EXISTS public.app_settings (
   company_address TEXT DEFAULT '100 Central Plaza',
   company_phone TEXT DEFAULT '(555) 012-3456',
   order_prefix TEXT DEFAULT 'ORD-',
+  default_pickup_time TIME DEFAULT '17:00',
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
@@ -378,9 +379,9 @@ CREATE POLICY "app_settings_update_management"
   USING (public.is_admin_or_manager());
 
 -- 11. INITIAL SEED DATA
-INSERT INTO public.app_settings (id, tax_rate, company_name, company_address, company_phone, order_prefix)
-VALUES ('default', 0.08, 'DryClean Pro', '100 Central Plaza', '(555) 012-3456', 'ORD-')
-ON CONFLICT (id) DO UPDATE SET order_prefix = EXCLUDED.order_prefix;
+INSERT INTO public.app_settings (id, tax_rate, company_name, company_address, company_phone, order_prefix, default_pickup_time)
+VALUES ('default', 0.08, 'DryClean Pro', '100 Central Plaza', '(555) 012-3456', 'ORD-', '17:00')
+ON CONFLICT (id) DO UPDATE SET order_prefix = EXCLUDED.order_prefix, default_pickup_time = EXCLUDED.default_pickup_time;
 
 INSERT INTO public.stores (id, name, address)
 VALUES 
