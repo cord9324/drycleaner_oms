@@ -41,6 +41,8 @@ const CreateOrderForm: React.FC<CreateOrderFormProps> = ({ onClose, onSuccess })
     const [pickupTime, setPickupTime] = useState(settings.defaultPickupTime || '17:00');
     const [specialHandling, setSpecialHandling] = useState('');
 
+    const selectedCustomer = customers.find(c => c.id === selectedCustomerId);
+
     useEffect(() => {
         if (stores.length > 0 && !selectedStoreId) {
             setSelectedStoreId(stores[0].id);
@@ -210,6 +212,7 @@ const CreateOrderForm: React.FC<CreateOrderFormProps> = ({ onClose, onSuccess })
                                 <input required placeholder="Last" className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2 text-xs" value={newCustomerData.lastName} onChange={(e) => setNewCustomerData({ ...newCustomerData, lastName: e.target.value })} />
                             </div>
                             <input required placeholder="Phone (Required)" className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2 text-xs" value={newCustomerData.phone} onChange={(e) => setNewCustomerData({ ...newCustomerData, phone: e.target.value })} />
+                            <textarea placeholder="Client Notes (Preferences, Allergies...)" className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2 text-xs h-16 outline-none" value={newCustomerData.notes} onChange={(e) => setNewCustomerData({ ...newCustomerData, notes: e.target.value })} />
                         </div>
                     )}
                 </div>
@@ -257,6 +260,15 @@ const CreateOrderForm: React.FC<CreateOrderFormProps> = ({ onClose, onSuccess })
             <div className="space-y-1">
                 <label className="text-[10px] font-bold text-slate-400 uppercase">Special Handling / Notes</label>
                 <textarea placeholder="e.g. Grass stain on collar, extra starch, delicate buttons..." className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2 text-xs h-16 focus:ring-2 focus:ring-primary/20 outline-none" value={specialHandling} onChange={(e) => setSpecialHandling(e.target.value)} />
+                {!isNewCustomer && selectedCustomer?.notes && (
+                    <div className="mt-1 flex items-start gap-1.5 p-2 bg-amber-50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/20 rounded-lg">
+                        <span className="material-symbols-outlined text-amber-500 text-[14px] mt-0.5">history_edu</span>
+                        <div className="flex-1">
+                            <p className="text-[10px] font-black text-amber-900 dark:text-amber-500 uppercase tracking-tight">Customer Preferences</p>
+                            <p className="text-[10px] text-amber-800 dark:text-amber-200 italic leading-tight">{selectedCustomer.notes}</p>
+                        </div>
+                    </div>
+                )}
             </div>
 
             <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex justify-between items-end">

@@ -153,6 +153,18 @@ const OrderDetail: React.FC = () => {
                 </div>
               ) : <p className="text-xs text-gray-500">Contact data unavailable</p>}
             </div>
+
+            {customer?.notes && (
+              <div className="bg-amber-50 dark:bg-amber-900/10 rounded-xl border border-amber-100 dark:border-amber-900/30 p-6 shadow-sm">
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="material-symbols-outlined text-amber-500 text-sm">history_edu</span>
+                  <h4 className="text-sm font-bold text-amber-900 dark:text-amber-500">Customer Notes</h4>
+                </div>
+                <p className="text-xs text-amber-800 dark:text-amber-200 leading-relaxed italic">
+                  "{customer.notes}"
+                </p>
+              </div>
+            )}
             <div className="bg-white dark:bg-[#1c2127] rounded-xl border border-gray-200 dark:border-[#3b4754] p-6 shadow-sm">
               <h4 className="text-sm font-bold mb-4">Order Lifecycle</h4>
               <div className="space-y-4">

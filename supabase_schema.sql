@@ -141,7 +141,7 @@ CREATE TABLE IF NOT EXISTS public.customers (
   email TEXT,
   phone TEXT,
   address TEXT,
-  notes TEXT,
+  notes TEXT, -- Internal staff notes (allergies, preferences, etc.)
   total_spent DECIMAL(12,2) DEFAULT 0,
   last_order_date TIMESTAMP WITH TIME ZONE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
@@ -341,8 +341,8 @@ CREATE TABLE IF NOT EXISTS public.app_settings (
   company_name TEXT DEFAULT 'DryClean Pro',
   company_address TEXT DEFAULT '100 Central Plaza',
   company_phone TEXT DEFAULT '(555) 012-3456',
-  order_prefix TEXT DEFAULT 'ORD-',
-  default_pickup_time TIME DEFAULT '17:00',
+  order_prefix TEXT DEFAULT 'ORD-', -- Custom prefix for sequential order numbers
+  default_pickup_time TIME DEFAULT '17:00', -- System-wide default pickup time
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 

@@ -17,7 +17,8 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ initialData, onClose, onSuc
         lastName: initialData?.lastName || '',
         email: initialData?.email || '',
         phone: initialData?.phone || '',
-        address: initialData?.address || ''
+        address: initialData?.address || '',
+        notes: initialData?.notes || ''
     });
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -69,7 +70,11 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ initialData, onClose, onSuc
             </div>
             <div>
                 <label className="block text-xs font-bold uppercase text-slate-500 mb-1">Address</label>
-                <textarea value={formData.address} onChange={e => setFormData({ ...formData, address: e.target.value })} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 text-sm h-20 focus:ring-2 focus:ring-primary/20 outline-none" placeholder="123 Main St..." />
+                <textarea value={formData.address} onChange={e => setFormData({ ...formData, address: e.target.value })} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 text-sm h-16 focus:ring-2 focus:ring-primary/20 outline-none" placeholder="123 Main St..." />
+            </div>
+            <div>
+                <label className="block text-xs font-bold uppercase text-slate-500 mb-1">Internal Notes</label>
+                <textarea value={formData.notes} onChange={e => setFormData({ ...formData, notes: e.target.value })} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 text-sm h-20 focus:ring-2 focus:ring-primary/20 outline-none" placeholder="Customer preferences, allergies, etc..." />
             </div>
 
             {initialData && (

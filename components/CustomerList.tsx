@@ -205,7 +205,12 @@ const CustomerList: React.FC = () => {
                           {c.firstName[0]}{c.lastName[0]}
                         </div>
                         <div>
-                          <p className="text-sm font-bold text-slate-900 dark:text-white">{c.lastName}, {c.firstName}</p>
+                          <div className="flex items-center gap-2">
+                            <p className="text-sm font-bold text-slate-900 dark:text-white">{c.lastName}, {c.firstName}</p>
+                            {c.notes && (
+                              <span className="material-symbols-outlined text-[14px] text-amber-500" title={c.notes}>history_edu</span>
+                            )}
+                          </div>
                           <p className="text-[10px] text-slate-500">ID: #{c.id}</p>
                         </div>
                       </div>
