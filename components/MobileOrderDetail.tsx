@@ -20,6 +20,7 @@ const MobileOrderDetail: React.FC = () => {
     );
     const [hangerNumber, setHangerNumber] = useState(order?.hangerNumber || '');
     const [priority, setPriority] = useState(order?.isPriority || false);
+    const [status, setStatus] = useState(order?.status || '');
 
     if (!order) {
         return (
@@ -55,6 +56,7 @@ const MobileOrderDetail: React.FC = () => {
         updateOrder(order.id, {
             items: items,
             isPriority: priority,
+            status: status as any,
             hangerNumber: hangerNumber.trim() || undefined,
             subtotal,
             tax,
@@ -67,14 +69,38 @@ const MobileOrderDetail: React.FC = () => {
         return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
     };
 
+    const getStatusColor = (status: string) => {
+        const colors: Record<string, string> = {
+            'RECEIVED': 'text-primary',
+            'CLEANING': 'text-purple-500',
+            'READY': 'text-green-500',
+            'COMPLETED': 'text-slate-500',
+            'HOLD': 'text-amber-500',
+            'VOID': 'text-red-500'
+        };
+        return colors[status] || 'text-primary';
+    };
+
     return (
         <div className="pb-24">
             {/* Order Header Card */}
             <div className="bg-white dark:bg-[#111418] p-6 border-b border-slate-200 dark:border-[#283039]">
-                <div className="flex justify-between items-start mb-4">
-                    <div>
+                <div className="flex justify-between items-start mb-4 text-white">
+                    <div className="flex flex-col">
                         <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">Order #{order.orderNumber}</h2>
-                        <p className="text-sm font-bold text-primary uppercase tracking-wider">{order.status}</p>
+                        {isEditing ? (
+                            <select
+                                value={status}
+                                onChange={(e) => setStatus(e.target.value)}
+                                className="mt-1 bg-slate-100 dark:bg-[#283039] border-none rounded-lg px-2 py-1 text-[10px] font-bold uppercase text-primary outline-none focus:ring-1 focus:ring-primary/50"
+                            >
+                                {['RECEIVED', 'CLEANING', 'READY', 'COMPLETED', 'HOLD', 'VOID'].map(s => (
+                                    <option key={s} value={s}>{s}</option>
+                                ))}
+                            </select>
+                        ) : (
+                            <p className={`text-sm font-bold uppercase tracking-wider ${getStatusColor(order.status)}`}>{order.status}</p>
+                        )}
                     </div>
                     <button
                         onClick={() => {
@@ -231,6 +257,7 @@ const MobileOrderDetail: React.FC = () => {
                         setItems(order.items.map(item => ({ ...item, class: ServiceClass.NONE })));
                         setHangerNumber(order.hangerNumber || '');
                         setPriority(order.isPriority);
+                        setStatus(order.status);
                     }}>Cancel</Button>
                     <Button fullWidth onClick={handleSave}>Update Order</Button>
                 </div>
