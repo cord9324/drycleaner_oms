@@ -114,7 +114,7 @@ export const Receipt: React.FC<ReceiptProps> = ({ order, customer, settings, sto
 
             <div className="pt-8 text-center space-y-4">
                 <div className="flex justify-center">
-                    <svg ref={barcodeRef}></svg>
+                    <svg ref={barcodeRef} className="barcode-svg" data-barcode={order.orderNumber}></svg>
                 </div>
                 <p className="text-[8px] uppercase font-bold tracking-widest text-black px-4 leading-tight">No refund without ticket. Orders donated after 90 days.</p>
             </div>

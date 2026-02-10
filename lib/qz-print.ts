@@ -84,6 +84,7 @@ class QZService {
               <head>
                 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Libre+Barcode+128&display=swap" rel="stylesheet">
                 <script src="https://cdn.tailwindcss.com"></script>
+                <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
                 <style>
                   body { font-family: 'Inter', sans-serif; background: white; margin: 0; padding: 0; width: 270px; overflow: hidden; }
                   .font-barcode { font-family: 'Libre Barcode 128', cursive !important; white-space: nowrap !important; }
@@ -92,6 +93,26 @@ class QZService {
               </head>
               <body>
                 ${receiptHtml}
+                <script>
+                  window.onload = function() {
+                    var svgs = document.querySelectorAll('.barcode-svg');
+                    svgs.forEach(function(svg) {
+                      var val = svg.getAttribute('data-barcode');
+                      if (val) {
+                        try {
+                          JsBarcode(svg, val, {
+                            format: "CODE128",
+                            width: 2,
+                            height: 80,
+                            displayValue: false,
+                            margin: 0,
+                            background: "transparent"
+                          });
+                        } catch(e) { console.error('Barcode fail:', e); }
+                      }
+                    });
+                  };
+                </script>
               </body>
             </html>
           `
@@ -135,6 +156,7 @@ class QZService {
               <head>
                 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Libre+Barcode+128&display=swap" rel="stylesheet">
                 <script src="https://cdn.tailwindcss.com"></script>
+                <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
                 <style>
                   body { font-family: 'Inter', sans-serif; background: white; margin: 0; padding: 0; width: 270px; overflow: hidden; }
                   .font-barcode { font-family: 'Libre Barcode 128', cursive !important; white-space: nowrap !important; }
@@ -143,6 +165,26 @@ class QZService {
               </head>
               <body>
                 ${ticketHtml}
+                <script>
+                  window.onload = function() {
+                    var svgs = document.querySelectorAll('.barcode-svg');
+                    svgs.forEach(function(svg) {
+                      var val = svg.getAttribute('data-barcode');
+                      if (val) {
+                        try {
+                          JsBarcode(svg, val, {
+                            format: "CODE128",
+                            width: 2,
+                            height: 80,
+                            displayValue: false,
+                            margin: 0,
+                            background: "transparent"
+                          });
+                        } catch(e) { console.error('Barcode fail:', e); }
+                      }
+                    });
+                  };
+                </script>
               </body>
             </html>
           `

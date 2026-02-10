@@ -91,7 +91,7 @@ export const ClaimTicket: React.FC<ClaimTicketProps> = ({ order, customer, setti
 
             <div className="pt-8 text-center space-y-4">
                 <div className="flex justify-center">
-                    <svg ref={barcodeRef}></svg>
+                    <svg ref={barcodeRef} className="barcode-svg" data-barcode={order.orderNumber}></svg>
                 </div>
                 <p className="text-[8px] uppercase font-bold tracking-widest text-black px-4 leading-tight">Must present this ticket for pickup. Not responsible for items left over 90 days.</p>
             </div>
