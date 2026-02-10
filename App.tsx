@@ -10,6 +10,9 @@ import Dashboard from './components/Dashboard';
 import Analytics from './components/Analytics';
 import Attendance from './components/Attendance';
 import Auth from './components/Auth';
+import MobileLayout from './components/MobileLayout';
+import MobileSearch from './components/MobileSearch';
+import MobileOrderDetail from './components/MobileOrderDetail';
 import { useOrderStore } from './store/useOrderStore';
 import { supabase, SUPABASE_CONFIG_VALID, saveSupabaseConfig } from './lib/supabase';
 
@@ -62,7 +65,7 @@ const App: React.FC = () => {
         .select('*')
         .eq('id', userId)
         .maybeSingle();
-      
+
       if (data && !error) {
         setProfile({
           id: data.id,
@@ -78,17 +81,17 @@ const App: React.FC = () => {
 
         const isFirstUser = (count === 0);
         const defaultName = email?.split('@')[0] || 'Member';
-        
+
         const profilePayload = {
           id: userId,
           name: defaultName,
           email: email || '',
-          role: isFirstUser ? 'ADMIN' : 'STAFF', 
+          role: isFirstUser ? 'ADMIN' : 'STAFF',
           avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${userId}`
         };
 
         const { error: insertError } = await supabase.from('profiles').insert([profilePayload]);
-        
+
         if (!insertError) {
           setProfile({
             ...profilePayload,
@@ -160,6 +163,12 @@ const App: React.FC = () => {
           <Route path="/analytics" element={<Analytics />} />
           <Route path="/attendance" element={<Attendance />} />
           <Route path="/settings" element={<Settings />} />
+        </Route>
+
+        {/* Mobile Routes */}
+        <Route path="/mobile" element={<MobileLayout />}>
+          <Route index element={<MobileSearch />} />
+          <Route path="order/:id" element={<MobileOrderDetail />} />
         </Route>
       </Routes>
     </HashRouter>

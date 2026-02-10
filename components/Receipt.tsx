@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
+import JsBarcode from 'jsbarcode';
 import { Order, Customer, AppSettings, Store } from '../types';
 
 interface ReceiptProps {
@@ -9,6 +10,21 @@ interface ReceiptProps {
 }
 
 export const Receipt: React.FC<ReceiptProps> = ({ order, customer, settings, store }) => {
+    const barcodeRef = useRef<SVGSVGElement>(null);
+
+    useEffect(() => {
+        if (barcodeRef.current) {
+            JsBarcode(barcodeRef.current, order.orderNumber, {
+                format: "CODE128",
+                width: 2,
+                height: 80,
+                displayValue: false,
+                margin: 0,
+                background: "transparent"
+            });
+        }
+    }, [order.orderNumber]);
+
     const formatTime = (timeStr: string) => {
         if (!timeStr) return 'N/A';
         const [h, m] = timeStr.split(':');
@@ -97,7 +113,9 @@ export const Receipt: React.FC<ReceiptProps> = ({ order, customer, settings, sto
             )}
 
             <div className="pt-8 text-center space-y-4">
-                <div className="font-barcode text-6xl opacity-100 text-black whitespace-nowrap" style={{ fontFamily: '"Libre Barcode 128", cursive', fontSize: '60pt', display: 'inline-block', minWidth: '100%' }}>{order.orderNumber}</div>
+                <div className="flex justify-center">
+                    <svg ref={barcodeRef}></svg>
+                </div>
                 <p className="text-[8px] uppercase font-bold tracking-widest text-black px-4 leading-tight">No refund without ticket. Orders donated after 90 days.</p>
             </div>
         </div>
