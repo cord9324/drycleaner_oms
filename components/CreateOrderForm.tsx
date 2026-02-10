@@ -223,7 +223,7 @@ const CreateOrderForm: React.FC<CreateOrderFormProps> = ({ onClose, onSuccess })
                 <div className="max-h-48 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
                     {orderItems.map(item => (
                         <div key={item.id} className="grid grid-cols-12 gap-3 items-center bg-slate-50 dark:bg-slate-800/50 p-2 rounded-lg border border-slate-200 dark:border-slate-700">
-                            <div className="col-span-7 flex gap-2">
+                            <div className="col-span-5 flex gap-2">
                                 <select className="flex-[0.35] min-w-[75px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded p-1 text-[10px] uppercase font-bold outline-none focus:ring-1 focus:ring-primary/20 text-slate-900 dark:text-white" value={item.class} onChange={(e) => handleItemChange(item.id!, 'class', e.target.value)}>
                                     <option value={ServiceClass.NONE}>All</option>
                                     {Object.values(ServiceClass).filter(c => c !== ServiceClass.NONE).map(c => <option key={c} value={c}>{c}</option>)}
@@ -237,6 +237,9 @@ const CreateOrderForm: React.FC<CreateOrderFormProps> = ({ onClose, onSuccess })
                             </div>
                             <div className="col-span-2">
                                 <input type="number" min="1" className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded p-1 text-xs text-center outline-none focus:ring-1 focus:ring-primary/20 text-slate-900 dark:text-white font-bold" value={item.quantity} onChange={(e) => handleItemChange(item.id!, 'quantity', parseInt(e.target.value))} title="Quantity" />
+                            </div>
+                            <div className="col-span-2">
+                                <input type="number" step="0.01" min="0" className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded p-1 text-xs text-center outline-none focus:ring-1 focus:ring-primary/20 text-slate-900 dark:text-white font-bold" value={item.unitPrice} onChange={(e) => handleItemChange(item.id!, 'unitPrice', parseFloat(e.target.value))} title="Unit Price" />
                             </div>
                             <div className="col-span-2 text-right text-xs font-black pt-0.5 truncate text-slate-700 dark:text-slate-200">${(item.total || 0).toFixed(2)}</div>
                             <div className="col-span-1 flex items-center justify-center">

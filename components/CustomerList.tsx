@@ -10,8 +10,7 @@ import { Customer, Order } from '../types';
 type SortKey = 'name' | 'email' | 'address' | 'totalSpent' | 'lastOrderDate';
 
 const CustomerList: React.FC = () => {
-  const { customers, orders, deleteCustomer, kanbanColumns } = useOrderStore();
-  const [localSearch, setLocalSearch] = useState('');
+  const { customers, orders, deleteCustomer, kanbanColumns, searchQuery, setSearchQuery } = useOrderStore();
   const navigate = useNavigate();
 
   // Modal states
@@ -65,9 +64,9 @@ const CustomerList: React.FC = () => {
 
   const filteredAndSorted = useMemo(() => {
     let result = customers.filter(c =>
-      `${c.firstName} ${c.lastName}`.toLowerCase().includes(localSearch.toLowerCase()) ||
-      c.email.toLowerCase().includes(localSearch.toLowerCase()) ||
-      c.phone.includes(localSearch)
+      `${c.firstName} ${c.lastName}`.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      c.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      c.phone.includes(searchQuery)
     );
 
     result.sort((a, b) => {
@@ -104,7 +103,7 @@ const CustomerList: React.FC = () => {
     });
 
     return result;
-  }, [customers, localSearch, sortConfig]);
+  }, [customers, searchQuery, sortConfig]);
 
 
 
@@ -158,8 +157,8 @@ const CustomerList: React.FC = () => {
           <label className="relative flex-1 sm:min-w-64">
             <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-sm text-[#9dabb9]">search</span>
             <input
-              value={localSearch}
-              onChange={(e) => setLocalSearch(e.target.value)}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full bg-white dark:bg-[#111418] border border-slate-200 dark:border-[#283039] rounded-lg py-1.5 pl-10 pr-4 text-sm focus:ring-primary focus:border-primary text-slate-900 dark:text-white"
               placeholder="Search customers..."
               type="text"

@@ -11,7 +11,7 @@ import { supabase } from '../lib/supabase';
 const Layout: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { currentUser, setSearchQuery, searchQuery, addOrder, addCustomer, updateCustomer, customers, stores, serviceCategories, kanbanColumns, clockIn, clockOut, timeLogs } = useOrderStore();
+  const { currentUser, setSearchQuery, searchQuery, addOrder, addCustomer, updateCustomer, customers, orders, stores, serviceCategories, kanbanColumns, clockIn, clockOut, timeLogs } = useOrderStore();
 
   const [isOrderModalOpen, setOrderModalOpen] = useState(false);
 
@@ -22,6 +22,66 @@ const Layout: React.FC = () => {
 
   const handleLogout = async () => { await supabase.auth.signOut(); };
 
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!searchQuery.trim()) return;
+
+    const query = searchQuery.toLowerCase().trim();
+
+    // 1. Check for exact order number match (priority) - Support "ORD-0001" or just "0001"
+    const exactOrder = orders.find(o =>
+      o.orderNumber.toLowerCase() === query ||
+      o.orderNumber.toLowerCase() === `ord-${query}` ||
+      o.id.toLowerCase() === query
+    );
+
+    if (exactOrder) {
+      navigate(`/orders/${exactOrder.id}`);
+      return;
+    }
+
+    // 2. Check for order partial matches (to decide if we should go to Order Board)
+    // Matches logic in KanbanBoard.tsx
+    const orderMatches = orders.filter(o =>
+      o.orderNumber.toLowerCase().includes(query) ||
+      o.customerName.toLowerCase().includes(query) ||
+      o.hangerNumber?.toLowerCase().includes(query)
+    );
+
+    // 3. Check for customer matches
+    // Matches logic in CustomerList.tsx
+    const customerMatches = customers.filter(c =>
+      `${c.firstName} ${c.lastName}`.toLowerCase().includes(query) ||
+      c.email.toLowerCase().includes(query) ||
+      c.phone.includes(query)
+    );
+
+    // Navigation Logic:
+    // - If we have order matches -> Go to Orders (primary view)
+    // - Else if hits in customers -> Go to Customers
+    // - Default -> Go to Orders if on a generic page
+
+    if (orderMatches.length > 0) {
+      if (!location.pathname.includes('/orders')) {
+        navigate('/orders');
+      }
+      return;
+    }
+
+    if (customerMatches.length > 0) {
+      if (!location.pathname.includes('/customers')) {
+        navigate('/customers');
+      }
+      return;
+    }
+
+    // Default: If on a non-searchable page (Dashboard, Attendance, Settings), go to Orders
+    const searchablePages = ['/orders', '/customers'];
+    if (!searchablePages.some(page => location.pathname.includes(page))) {
+      navigate('/orders');
+    }
+  };
 
   const navItems = useMemo(() => [
     { label: 'Dashboard', icon: 'dashboard', path: '/dashboard' },
@@ -99,10 +159,10 @@ const Layout: React.FC = () => {
         <header className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-background-dark px-8 py-3 shrink-0">
           <div className="flex items-center gap-6">
             <h2 className="text-slate-900 dark:text-white text-xl font-bold tracking-tight">{navItems.find(n => location.pathname.startsWith(n.path))?.label || 'Overview'}</h2>
-            <div className="relative w-64">
+            <form onSubmit={handleSearchSubmit} className="relative w-64">
               <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[20px]">search</span>
               <input value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full h-10 pl-10 pr-4 rounded-lg bg-slate-100 dark:bg-slate-900 border-none text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-primary" placeholder="Search orders..." type="text" />
-            </div>
+            </form>
           </div>
         </header>
         <div className="flex-1 overflow-auto custom-scrollbar"><Outlet /></div>
