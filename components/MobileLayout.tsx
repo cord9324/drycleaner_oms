@@ -6,33 +6,34 @@ import { supabase } from '../lib/supabase';
 const MobileLayout: React.FC = () => {
     const navigate = useNavigate();
     const location = useLocation();
-    const { currentUser } = useOrderStore();
+    const isOrderPage = location.pathname.includes('/mobile/order/');
+    const orderId = isOrderPage ? location.pathname.split('/').pop() : null;
+    const { currentUser, orders } = useOrderStore();
+    const currentOrder = orders.find(o => o.id === orderId);
 
     const handleLogout = async () => {
         await supabase.auth.signOut();
     };
 
-    const isOrderPage = location.pathname.includes('/mobile/order/');
-
     return (
         <div className="flex flex-col h-screen bg-slate-50 dark:bg-[#0b0f13] overflow-hidden">
             {/* Mobile Top Bar */}
             <header className="flex items-center justify-between px-4 h-14 bg-white dark:bg-[#111418] border-b border-slate-200 dark:border-[#283039] shrink-0">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 overflow-hidden">
                     {isOrderPage ? (
                         <button
                             onClick={() => navigate('/mobile')}
-                            className="p-2 -ml-2 text-slate-600 dark:text-[#9dabb9] hover:text-primary transition-colors"
+                            className="p-2 -ml-2 text-slate-600 dark:text-[#9dabb9] hover:text-primary transition-colors shrink-0"
                         >
                             <span className="material-symbols-outlined">arrow_back</span>
                         </button>
                     ) : (
-                        <div className="bg-primary rounded-lg p-1 flex items-center justify-center">
+                        <div className="bg-primary rounded-lg p-1 flex items-center justify-center shrink-0">
                             <span className="material-symbols-outlined text-white text-xl">dry_cleaning</span>
                         </div>
                     )}
-                    <span className="font-bold text-slate-900 dark:text-white text-sm">
-                        {isOrderPage ? 'Order Details' : 'DryClean Pro'}
+                    <span className="font-bold text-slate-900 dark:text-white text-sm truncate">
+                        {isOrderPage ? (currentOrder ? `Order #${currentOrder.orderNumber}` : 'Order') : 'DryClean Pro'}
                     </span>
                 </div>
 
