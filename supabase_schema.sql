@@ -178,10 +178,13 @@ CREATE POLICY "customers_delete_management"
 
 
 -- 5. SERVICE CATEGORIES TABLE
+CREATE TYPE public.service_class AS ENUM ('None', 'Shirts', 'Pants', 'Suits', 'Coats/Jackets', 'Dresses', 'Linen', 'Other');
+
 CREATE TABLE IF NOT EXISTS public.service_categories (
   id TEXT PRIMARY KEY,
   name TEXT NOT NULL,
   service_type TEXT NOT NULL,
+  class public.service_class DEFAULT 'None',
   base_price DECIMAL(10,2) NOT NULL,
   position INTEGER DEFAULT 0,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()

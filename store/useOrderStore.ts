@@ -162,6 +162,7 @@ export const useOrderStore = create<OrderState>((set, get) => ({
         serviceCategories: (servicesRes.data || []).map(s => ({
           ...s,
           serviceType: s.service_type,
+          class: s.class,
           basePrice: parseFloat(s.base_price || 0)
         })),
         kanbanColumns: columnsRes.data || [],
@@ -447,6 +448,7 @@ export const useOrderStore = create<OrderState>((set, get) => ({
       id: category.id,
       name: category.name,
       service_type: category.serviceType,
+      class: category.class,
       base_price: category.basePrice,
       position
     }]);
@@ -456,6 +458,7 @@ export const useOrderStore = create<OrderState>((set, get) => ({
     const dbUpdates: any = {};
     if (updates.name) dbUpdates.name = updates.name;
     if (updates.serviceType) dbUpdates.service_type = updates.serviceType;
+    if (updates.class) dbUpdates.class = updates.class;
     if (updates.basePrice) dbUpdates.base_price = updates.basePrice;
     const { error } = await supabase.from('service_categories').update(dbUpdates).eq('id', id);
     if (!error) get().fetchInitialData();
@@ -473,6 +476,7 @@ export const useOrderStore = create<OrderState>((set, get) => ({
       id: cat.id,
       name: cat.name,
       service_type: cat.serviceType,
+      class: cat.class,
       base_price: cat.basePrice,
       position: idx
     }));

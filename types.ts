@@ -1,9 +1,19 @@
-
 export enum ServiceType {
   DRY_CLEAN = 'Dry Clean',
   LAUNDER = 'Launder',
   ALTERATION = 'Alteration',
   SPECIALTY = 'Specialty'
+}
+
+export enum ServiceClass {
+  NONE = 'None',
+  SHIRTS = 'Shirts',
+  PANTS = 'Pants',
+  SUITS = 'Suits',
+  COATS_JACKETS = 'Coats/Jackets',
+  DRESSES = 'Dresses',
+  LINEN = 'Linen',
+  OTHER = 'Other'
 }
 
 export enum OrderStatus {
@@ -19,6 +29,7 @@ export interface ServiceCategory {
   id: string;
   name: string;
   serviceType: ServiceType;
+  class: ServiceClass;
   basePrice: number;
   position: number;
 }

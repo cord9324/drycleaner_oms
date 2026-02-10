@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useOrderStore } from '../store/useOrderStore';
 import { Button } from './ui/Button';
 import Combobox from './ui/Combobox';
-import { ServiceType, OrderItem, Customer, Order } from '../types';
+import { ServiceType, ServiceClass, OrderItem, Customer, Order } from '../types';
 import { qzService } from '../lib/qz-print';
 
 interface CreateOrderFormProps {
@@ -33,8 +33,8 @@ const CreateOrderForm: React.FC<CreateOrderFormProps> = ({ onClose, onSuccess })
     const [selectedStoreId, setSelectedStoreId] = useState('');
     const [hangerNumber, setHangerNumber] = useState('');
 
-    const [orderItems, setOrderItems] = useState<Partial<OrderItem>[]>([
-        { id: Math.random().toString(36).substr(2, 9), category: '', quantity: 1, unitPrice: 0, total: 0 }
+    const [orderItems, setOrderItems] = useState<Partial<OrderItem & { class: ServiceClass }>[]>([
+        { id: Math.random().toString(36).substr(2, 9), category: '', class: ServiceClass.NONE, quantity: 1, unitPrice: 0, total: 0 }
     ]);
     const [isPriority, setIsPriority] = useState(false);
     const [pickupDate, setPickupDate] = useState(new Date(Date.now() + 86400000 * 2).toISOString().split('T')[0]);
@@ -50,7 +50,7 @@ const CreateOrderForm: React.FC<CreateOrderFormProps> = ({ onClose, onSuccess })
     }, [stores, selectedStoreId]);
 
     const handleAddItem = () => {
-        setOrderItems([...orderItems, { id: Math.random().toString(36).substr(2, 9), category: '', quantity: 1, unitPrice: 0, total: 0 }]);
+        setOrderItems([...orderItems, { id: Math.random().toString(36).substr(2, 9), category: '', class: ServiceClass.NONE, quantity: 1, unitPrice: 0, total: 0 }]);
     };
 
     const handleRemoveItem = (id: string) => {
@@ -222,16 +222,28 @@ const CreateOrderForm: React.FC<CreateOrderFormProps> = ({ onClose, onSuccess })
                 <div className="flex justify-between items-center"><label className="text-[10px] font-bold text-slate-400 uppercase">Order Items</label><button type="button" onClick={handleAddItem} className="text-primary text-[10px] font-bold uppercase">+ Add Line</button></div>
                 <div className="max-h-48 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
                     {orderItems.map(item => (
-                        <div key={item.id} className="grid grid-cols-12 gap-2 bg-slate-50 dark:bg-slate-800/50 p-2 rounded-lg border border-slate-200 dark:border-slate-700">
-                            <div className="col-span-7">
-                                <select required className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded p-1 text-xs" value={item.category} onChange={(e) => handleItemChange(item.id!, 'category', e.target.value)}>
+                        <div key={item.id} className="grid grid-cols-12 gap-3 items-center bg-slate-50 dark:bg-slate-800/50 p-2 rounded-lg border border-slate-200 dark:border-slate-700">
+                            <div className="col-span-7 flex gap-2">
+                                <select className="flex-[0.35] min-w-[75px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded p-1 text-[10px] uppercase font-bold outline-none focus:ring-1 focus:ring-primary/20 text-slate-900 dark:text-white" value={item.class} onChange={(e) => handleItemChange(item.id!, 'class', e.target.value)}>
+                                    <option value={ServiceClass.NONE}>All</option>
+                                    {Object.values(ServiceClass).filter(c => c !== ServiceClass.NONE).map(c => <option key={c} value={c}>{c}</option>)}
+                                </select>
+                                <select required className="flex-1 min-w-0 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded p-1 text-xs truncate outline-none focus:ring-1 focus:ring-primary/20 text-slate-900 dark:text-white" value={item.category} onChange={(e) => handleItemChange(item.id!, 'category', e.target.value)}>
                                     <option value="">Select Service...</option>
-                                    {serviceCategories.map(cat => <option key={cat.id} value={cat.name}>{cat.name} (${cat.basePrice})</option>)}
+                                    {serviceCategories
+                                        .filter(cat => item.class === ServiceClass.NONE || cat.class === item.class)
+                                        .map(cat => <option key={cat.id} value={cat.name}>{cat.name} (${cat.basePrice})</option>)}
                                 </select>
                             </div>
-                            <div className="col-span-2"><input type="number" min="1" className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded p-1 text-xs" value={item.quantity} onChange={(e) => handleItemChange(item.id!, 'quantity', parseInt(e.target.value))} /></div>
-                            <div className="col-span-2 text-right text-xs font-bold pt-1.5">${(item.total || 0).toFixed(2)}</div>
-                            <div className="col-span-1 flex items-center justify-center"><button type="button" onClick={() => handleRemoveItem(item.id!)} className="text-slate-400 hover:text-red-500"><span className="material-symbols-outlined text-[16px]">close</span></button></div>
+                            <div className="col-span-2">
+                                <input type="number" min="1" className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded p-1 text-xs text-center outline-none focus:ring-1 focus:ring-primary/20 text-slate-900 dark:text-white font-bold" value={item.quantity} onChange={(e) => handleItemChange(item.id!, 'quantity', parseInt(e.target.value))} title="Quantity" />
+                            </div>
+                            <div className="col-span-2 text-right text-xs font-black pt-0.5 truncate text-slate-700 dark:text-slate-200">${(item.total || 0).toFixed(2)}</div>
+                            <div className="col-span-1 flex items-center justify-center">
+                                <button type="button" onClick={() => handleRemoveItem(item.id!)} className="text-slate-400 hover:text-red-500 transition-colors" title="Remove Item">
+                                    <span className="material-symbols-outlined text-[18px]">close</span>
+                                </button>
+                            </div>
                         </div>
                     ))}
                 </div>

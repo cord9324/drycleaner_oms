@@ -129,7 +129,7 @@ const Settings: React.FC = () => {
           <div className="bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm">
             <table className="w-full text-left">
               <thead className="bg-slate-50 dark:bg-slate-900/50 text-slate-500 dark:text-slate-400 text-[10px] font-black uppercase tracking-widest">
-                <tr><th className="px-6 py-4">Item</th><th className="px-6 py-4">Type</th><th className="px-6 py-4">Price</th><th className="px-6 py-4 text-right">Actions</th></tr>
+                <tr><th className="px-6 py-4">Item</th><th className="px-6 py-4">Type</th><th className="px-6 py-4">Class</th><th className="px-6 py-4">Price</th><th className="px-6 py-4 text-right">Actions</th></tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                 {serviceCategories.map((cat, index) => (
@@ -144,6 +144,7 @@ const Settings: React.FC = () => {
                       </div>
                     </td>
                     <td className="px-6 py-4"><span className="text-xs font-medium px-2 py-1 bg-slate-100 dark:bg-slate-800 rounded-md">{cat.serviceType}</span></td>
+                    <td className="px-6 py-4"><span className="text-xs font-medium px-2 py-1 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 rounded-md">{cat.class || 'None'}</span></td>
                     <td className="px-6 py-4 text-emerald-500 font-bold">${cat.basePrice.toFixed(2)}</td>
                     <td className="px-6 py-4 text-right">
                       <button onClick={() => { setEditingServiceId(cat.id); setServiceModalOpen(true); }} className="p-2 text-slate-400 hover:text-primary"><span className="material-symbols-outlined text-[20px]">edit</span></button>

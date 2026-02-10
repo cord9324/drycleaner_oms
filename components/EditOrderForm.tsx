@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useOrderStore } from '../store/useOrderStore';
-import { Order, OrderItem, ServiceType } from '../types';
+import { Order, OrderItem, ServiceType, ServiceClass } from '../types';
 
 interface EditOrderFormProps {
     order: Order;
@@ -11,7 +11,9 @@ interface EditOrderFormProps {
 const EditOrderForm: React.FC<EditOrderFormProps> = ({ order, onClose, onSuccess }) => {
     const { updateOrder, serviceCategories, settings, stores } = useOrderStore();
 
-    const [items, setItems] = useState<OrderItem[]>([...order.items]);
+    const [items, setItems] = useState<(OrderItem & { class?: ServiceClass })[]>(
+        order.items.map(item => ({ ...item, class: ServiceClass.NONE }))
+    );
     const [priority, setPriority] = useState(order.isPriority);
     const [hangerNumber, setHangerNumber] = useState(order.hangerNumber || '');
     const [pickupDate, setPickupDate] = useState(order.pickupDate);
@@ -42,6 +44,7 @@ const EditOrderForm: React.FC<EditOrderFormProps> = ({ order, onClose, onSuccess
             id: Math.random().toString(36).substr(2, 9),
             category: '',
             serviceType: ServiceType.DRY_CLEAN,
+            class: ServiceClass.NONE,
             quantity: 1,
             unitPrice: 0,
             total: 0
@@ -110,16 +113,28 @@ const EditOrderForm: React.FC<EditOrderFormProps> = ({ order, onClose, onSuccess
             <div className="space-y-3">
                 <div className="flex justify-between items-center"><label className="text-xs font-bold uppercase text-slate-500">Items</label><button type="button" onClick={handleAddItem} className="text-primary text-xs font-bold">+ Add Item</button></div>
                 {items.map(item => (
-                    <div key={item.id} className="grid grid-cols-12 gap-2 items-end bg-slate-50 dark:bg-slate-800 p-3 rounded-xl">
-                        <div className="col-span-6">
-                            <select required className="w-full bg-white dark:bg-slate-900 p-2 rounded-lg text-sm" value={item.category} onChange={e => handleItemChange(item.id, 'category', e.target.value)}>
+                    <div key={item.id} className="grid grid-cols-12 gap-3 items-center bg-slate-50 dark:bg-slate-800 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
+                        <div className="col-span-7 flex gap-2">
+                            <select className="flex-[0.35] min-w-[75px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg p-1.5 text-[10px] font-bold uppercase outline-none focus:ring-1 focus:ring-primary/20 text-slate-900 dark:text-white" value={item.class} onChange={(e) => handleItemChange(item.id, 'class', e.target.value)}>
+                                <option value={ServiceClass.NONE}>All</option>
+                                {Object.values(ServiceClass).filter(c => c !== ServiceClass.NONE).map(c => <option key={c} value={c}>{c}</option>)}
+                            </select>
+                            <select required className="flex-1 min-w-0 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg p-1.5 text-xs truncate outline-none focus:ring-1 focus:ring-primary/20 text-slate-900 dark:text-white" value={item.category} onChange={e => handleItemChange(item.id, 'category', e.target.value)}>
                                 <option value="">Select Category</option>
-                                {serviceCategories.map(cat => <option key={cat.id} value={cat.name}>{cat.name}</option>)}
+                                {serviceCategories
+                                    .filter(cat => item.class === ServiceClass.NONE || cat.class === item.class)
+                                    .map(cat => <option key={cat.id} value={cat.name}>{cat.name}</option>)}
                             </select>
                         </div>
-                        <div className="col-span-3"><input type="number" min="1" className="w-full bg-white dark:bg-slate-900 p-2 rounded-lg text-sm" value={item.quantity} onChange={e => handleItemChange(item.id, 'quantity', parseInt(e.target.value))} /></div>
-                        <div className="col-span-2 text-right text-xs font-bold pt-5">${item.total.toFixed(2)}</div>
-                        <div className="col-span-1"><button type="button" onClick={() => handleRemoveItem(item.id)} className="text-red-500"><span className="material-symbols-outlined text-[20px]">delete</span></button></div>
+                        <div className="col-span-2">
+                            <input type="number" min="1" className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg p-1.5 text-xs text-center outline-none focus:ring-1 focus:ring-primary/20 text-slate-900 dark:text-white font-bold" value={item.quantity} onChange={e => handleItemChange(item.id, 'quantity', parseInt(e.target.value))} title="Quantity" />
+                        </div>
+                        <div className="col-span-2 text-right text-xs font-black text-slate-700 dark:text-slate-200 truncate">${item.total.toFixed(2)}</div>
+                        <div className="col-span-1 text-right">
+                            <button type="button" onClick={() => handleRemoveItem(item.id)} className="text-slate-400 hover:text-red-500 transition-colors p-1 leading-none" title="Remove Item">
+                                <span className="material-symbols-outlined text-[18px]">delete</span>
+                            </button>
+                        </div>
                     </div>
                 ))}
             </div>
