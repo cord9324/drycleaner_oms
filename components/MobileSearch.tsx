@@ -10,7 +10,10 @@ const MobileSearch: React.FC = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [showScanner, setShowScanner] = useState(true);
 
+    const [error, setError] = useState<string | null>(null);
+
     const handleScan = (decodedText: string) => {
+        setError(null);
         // Attempt to find order by ID or order number
         const order = orders.find(o =>
             o.id === decodedText ||
@@ -26,12 +29,15 @@ const MobileSearch: React.FC = () => {
             if (customer) {
                 setSearchQuery(decodedText);
                 setShowScanner(false);
+            } else {
+                setError('Barcode not recognized or order not found.');
             }
         }
     };
 
     const handleManualSearch = (e: React.FormEvent) => {
         e.preventDefault();
+        setError(null);
         const query = searchQuery.trim().toLowerCase();
         if (!query) return;
 
@@ -43,6 +49,8 @@ const MobileSearch: React.FC = () => {
 
         if (order) {
             navigate(`/mobile/order/${order.id}`);
+        } else {
+            setError('Order not found. Please check the number.');
         }
     };
 
@@ -81,6 +89,7 @@ const MobileSearch: React.FC = () => {
                         </div>
                         <div className="grid grid-cols-2 gap-3">
                             <Button
+                                type="button"
                                 variant="secondary"
                                 fullWidth
                                 onClick={() => setShowScanner(true)}
@@ -96,6 +105,12 @@ const MobileSearch: React.FC = () => {
                                 Find Order
                             </Button>
                         </div>
+                        {error && (
+                            <div className="flex items-center gap-2 p-3 rounded-xl bg-red-50 dark:bg-red-500/10 border border-red-100 dark:border-red-500/20 text-red-600 dark:text-red-400 animate-in fade-in slide-in-from-top-1">
+                                <span className="material-symbols-outlined text-xl">error</span>
+                                <p className="text-xs font-bold leading-none">{error}</p>
+                            </div>
+                        )}
                     </form>
                 )}
             </div>
