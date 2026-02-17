@@ -151,11 +151,13 @@ const App: React.FC = () => {
 
   if (!session) return <Auth />;
 
+  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
   return (
     <HashRouter>
       <Routes>
         <Route element={<Layout />}>
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          <Route path="/" element={<Navigate to={isMobile ? "/mobile" : "/dashboard"} replace />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/orders" element={<KanbanBoard />} />
           <Route path="/orders/:id" element={<OrderDetail />} />
