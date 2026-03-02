@@ -50,6 +50,7 @@ export interface Customer {
   phone: string;
   address: string;
   notes?: string;
+  isDeleted?: boolean;
   createdAt: string;
   lastOrderDate?: string;
   totalSpent: number;

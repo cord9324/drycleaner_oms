@@ -63,11 +63,11 @@ const CustomerList: React.FC = () => {
   };
 
   const filteredAndSorted = useMemo(() => {
-    let result = customers.filter(c =>
+    let result = customers.filter(c => !c.isDeleted && (
       `${c.firstName} ${c.lastName}`.toLowerCase().includes(searchQuery.toLowerCase()) ||
       c.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
       c.phone.includes(searchQuery)
-    );
+    ));
 
     result.sort((a, b) => {
       let valA: any, valB: any;

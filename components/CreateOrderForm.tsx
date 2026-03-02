@@ -18,13 +18,15 @@ const CreateOrderForm: React.FC<CreateOrderFormProps> = ({ onClose, onSuccess })
         addOrder,
         addCustomer,
         updateCustomer,
-        customers,
+        customers: allCustomers,
         stores,
         serviceCategories,
         kanbanColumns,
         settings,
         getNextOrderNumber
     } = useOrderStore();
+
+    const customers = allCustomers.filter(c => !c.isDeleted);
 
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isNewCustomer, setIsNewCustomer] = useState(false);

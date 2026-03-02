@@ -144,6 +144,7 @@ CREATE TABLE IF NOT EXISTS public.customers (
   notes TEXT, -- Internal staff notes (allergies, preferences, etc.)
   total_spent DECIMAL(12,2) DEFAULT 0,
   last_order_date TIMESTAMP WITH TIME ZONE,
+  is_deleted BOOLEAN DEFAULT FALSE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 

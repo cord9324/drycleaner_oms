@@ -147,6 +147,7 @@ export const useOrderStore = create<OrderState>((set, get) => ({
           ...c,
           firstName: c.first_name,
           lastName: c.last_name,
+          isDeleted: c.is_deleted,
           totalSpent: parseFloat(c.total_spent || 0),
           createdAt: c.created_at,
           lastOrderDate: c.last_order_date
@@ -330,6 +331,7 @@ export const useOrderStore = create<OrderState>((set, get) => ({
       phone: customer.phone,
       address: customer.address,
       notes: customer.notes,
+      is_deleted: false,
       total_spent: customer.totalSpent,
       created_at: customer.createdAt
     }]);
@@ -354,8 +356,9 @@ export const useOrderStore = create<OrderState>((set, get) => ({
   },
 
   deleteCustomer: async (id) => {
-    const { error } = await supabase.from('customers').delete().eq('id', id);
-    if (!error) get().fetchInitialData();
+    const { error } = await supabase.from('customers').update({ is_deleted: true }).eq('id', id);
+    if (error) console.error("Customer Soft Delete Error:", error.message);
+    else get().fetchInitialData();
   },
 
   addStore: async (store) => {
