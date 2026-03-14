@@ -22,6 +22,7 @@ const MobileSearch: React.FC = () => {
         );
 
         if (order) {
+            setSearchQuery('');
             navigate(`/mobile/order/${order.id}`);
         } else {
             // If no order, check if it's a customer phone?
@@ -48,6 +49,7 @@ const MobileSearch: React.FC = () => {
         );
 
         if (order) {
+            setSearchQuery('');
             navigate(`/mobile/order/${order.id}`);
         } else {
             setError('Order not found. Please check the number.');

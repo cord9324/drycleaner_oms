@@ -177,6 +177,26 @@ CREATE POLICY "customers_delete_management"
   FOR DELETE
   USING (public.is_admin_or_manager());
 
+-- TRIGGER: Sync Customer Name to Orders
+CREATE OR REPLACE FUNCTION public.sync_customer_name_to_orders()
+RETURNS TRIGGER AS $$
+BEGIN
+  -- Check if first_name or last_name changed
+  IF (NEW.first_name IS DISTINCT FROM OLD.first_name OR NEW.last_name IS DISTINCT FROM OLD.last_name) THEN
+    -- Update the denormalized customer_name on all their orders
+    UPDATE public.orders
+    SET customer_name = NEW.last_name || ', ' || NEW.first_name
+    WHERE customer_id = NEW.id;
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+DROP TRIGGER IF EXISTS on_customer_name_changed ON public.customers;
+CREATE TRIGGER on_customer_name_changed
+  AFTER UPDATE ON public.customers
+  FOR EACH ROW EXECUTE FUNCTION public.sync_customer_name_to_orders();
+
 
 -- 5. SERVICE CATEGORIES TABLE
 CREATE TYPE public.service_class AS ENUM ('None', 'Shirts', 'Pants', 'Suits', 'Coats/Jackets', 'Dresses', 'Linen', 'Other');

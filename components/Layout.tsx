@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useOrderStore } from '../store/useOrderStore';
 import Modal from './Modal';
@@ -14,6 +14,16 @@ const Layout: React.FC = () => {
   const { currentUser, setSearchQuery, searchQuery, addOrder, addCustomer, updateCustomer, customers, orders, stores, serviceCategories, kanbanColumns, clockIn, clockOut, timeLogs } = useOrderStore();
 
   const [isOrderModalOpen, setOrderModalOpen] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!isOrderModalOpen) {
+      const timeout = setTimeout(() => {
+        searchInputRef.current?.focus();
+      }, 100);
+      return () => clearTimeout(timeout);
+    }
+  }, [location.pathname, isOrderModalOpen]);
 
   const isClockedIn = useMemo(() => {
     if (!currentUser) return false;
@@ -37,6 +47,7 @@ const Layout: React.FC = () => {
     );
 
     if (exactOrder) {
+      setSearchQuery('');
       navigate(`/orders/${exactOrder.id}`);
       return;
     }
@@ -161,7 +172,7 @@ const Layout: React.FC = () => {
             <h2 className="text-slate-900 dark:text-white text-xl font-bold tracking-tight">{navItems.find(n => location.pathname.startsWith(n.path))?.label || 'Overview'}</h2>
             <form onSubmit={handleSearchSubmit} className="relative w-64">
               <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[20px]">search</span>
-              <input value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full h-10 pl-10 pr-4 rounded-lg bg-slate-100 dark:bg-slate-900 border-none text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-primary" placeholder="Search orders..." type="text" />
+              <input ref={searchInputRef} value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full h-10 pl-10 pr-4 rounded-lg bg-slate-100 dark:bg-slate-900 border-none text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-primary" placeholder="Search orders..." type="text" />
             </form>
           </div>
         </header>
