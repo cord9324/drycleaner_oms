@@ -1,6 +1,6 @@
 
 import { create } from 'zustand';
-import { Order, Customer, Store, User, ServiceCategory, ServiceType, KanbanColumn, TimeLog, OrderStatus, AppSettings } from '../types';
+import { Order, Customer, Store, User, ServiceCategory, ServiceClass, ServiceType, KanbanColumn, TimeLog, OrderStatus, AppSettings } from '../types';
 import { supabase, CURRENT_URL, CURRENT_KEY } from '../lib/supabase';
 import { Session, createClient } from '@supabase/supabase-js';
 
@@ -10,6 +10,7 @@ interface OrderState {
   stores: Store[];
   users: User[];
   serviceCategories: ServiceCategory[];
+  serviceClasses: ServiceClass[];
   kanbanColumns: KanbanColumn[];
   timeLogs: TimeLog[];
   currentUser: User | null;
@@ -61,6 +62,11 @@ interface OrderState {
   deleteKanbanColumn: (id: string) => Promise<void>;
   reorderKanbanColumns: (startIndex: number, endIndex: number) => Promise<void>;
 
+  addServiceClass: (serviceClass: Omit<ServiceClass, 'position'>) => Promise<void>;
+  updateServiceClass: (id: string, updates: Partial<ServiceClass>) => Promise<void>;
+  deleteServiceClass: (id: string) => Promise<void>;
+  reorderServiceClasses: (startIndex: number, endIndex: number) => Promise<void>;
+
   updateSettings: (updates: Partial<AppSettings>) => Promise<void>;
   getNextOrderNumber: () => Promise<string>;
 
@@ -73,6 +79,7 @@ export const useOrderStore = create<OrderState>((set, get) => ({
   customers: [],
   stores: [],
   serviceCategories: [],
+  serviceClasses: [],
   kanbanColumns: [],
   users: [],
   timeLogs: [],
@@ -103,6 +110,7 @@ export const useOrderStore = create<OrderState>((set, get) => ({
         servicesRes,
         columnsRes,
         profilesRes,
+        classesRes,
         settingsRes
       ] = await Promise.all([
         supabase.from('orders').select('*').order('created_at', { ascending: false }),
@@ -111,6 +119,7 @@ export const useOrderStore = create<OrderState>((set, get) => ({
         supabase.from('service_categories').select('*').order('position'),
         supabase.from('kanban_columns').select('*').order('position'),
         supabase.from('profiles').select('*'),
+        supabase.from('service_classes').select('*').order('position'),
         supabase.from('app_settings').select('*').eq('id', 'default').single()
       ]);
 
@@ -168,6 +177,7 @@ export const useOrderStore = create<OrderState>((set, get) => ({
         })),
         kanbanColumns: columnsRes.data || [],
         users: fetchedUsers,
+        serviceClasses: (classesRes.data || []),
         settings: settingsRes.data ? {
           taxRate: parseFloat(settingsRes.data.tax_rate),
           orderPrefix: settingsRes.data.order_prefix || 'ORD-',
@@ -201,6 +211,8 @@ export const useOrderStore = create<OrderState>((set, get) => ({
       .on('postgres_changes', { event: '*', table: 'customers', schema: 'public' }, () => get().fetchInitialData())
       .on('postgres_changes', { event: '*', table: 'profiles', schema: 'public' }, () => get().fetchInitialData())
       .on('postgres_changes', { event: '*', table: 'time_logs', schema: 'public' }, () => get().fetchTimeLogs())
+      .on('postgres_changes', { event: '*', table: 'kanban_columns', schema: 'public' }, () => get().fetchInitialData())
+      .on('postgres_changes', { event: '*', table: 'service_classes', schema: 'public' }, () => get().fetchInitialData())
       .on('postgres_changes', { event: '*', table: 'app_settings', schema: 'public' }, () => get().fetchInitialData())
       .subscribe();
 
@@ -518,6 +530,36 @@ export const useOrderStore = create<OrderState>((set, get) => ({
     const { error } = await supabase.from('kanban_columns').upsert(updates);
     if (error) {
       console.error("Error persisting kanban column order:", error.message);
+      get().fetchInitialData();
+    }
+  },
+
+  addServiceClass: async (serviceClass) => {
+    const position = get().serviceClasses.length;
+    const { error } = await supabase.from('service_classes').insert([{ ...serviceClass, position }]);
+    if (!error) get().fetchInitialData();
+  },
+  updateServiceClass: async (id, updates) => {
+    const { error } = await supabase.from('service_classes').update(updates).eq('id', id);
+    if (!error) get().fetchInitialData();
+  },
+  deleteServiceClass: async (id) => {
+    const { error } = await supabase.from('service_classes').delete().eq('id', id);
+    if (!error) get().fetchInitialData();
+  },
+  reorderServiceClasses: async (startIndex, endIndex) => {
+    const result = Array.from(get().serviceClasses);
+    const [removed] = result.splice(startIndex, 1);
+    result.splice(endIndex, 0, removed);
+    set({ serviceClasses: result });
+    const updates = result.map((col, idx) => ({
+      id: col.id,
+      name: col.name,
+      position: idx
+    }));
+    const { error } = await supabase.from('service_classes').upsert(updates);
+    if (error) {
+      console.error("Error persisting service class order:", error.message);
       get().fetchInitialData();
     }
   },

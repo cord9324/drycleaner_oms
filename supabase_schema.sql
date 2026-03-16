@@ -198,14 +198,35 @@ CREATE TRIGGER on_customer_name_changed
   FOR EACH ROW EXECUTE FUNCTION public.sync_customer_name_to_orders();
 
 
--- 5. SERVICE CATEGORIES TABLE
-CREATE TYPE public.service_class AS ENUM ('None', 'Shirts', 'Pants', 'Suits', 'Coats/Jackets', 'Dresses', 'Linen', 'Other');
+-- 5. SERVICE CLASSES TABLE (Dynamic Replacement for Enum)
+CREATE TABLE IF NOT EXISTS public.service_classes (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  position INTEGER DEFAULT 0,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
 
+ALTER TABLE public.service_classes ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "service_classes_select_all_authenticated" ON public.service_classes;
+CREATE POLICY "service_classes_select_all_authenticated"
+  ON public.service_classes
+  FOR SELECT
+  TO authenticated
+  USING (true);
+
+DROP POLICY IF EXISTS "service_classes_modify_management" ON public.service_classes;
+CREATE POLICY "service_classes_modify_management"
+  ON public.service_classes
+  FOR ALL
+  USING (public.is_admin_or_manager());
+
+-- 5.5 SERVICE CATEGORIES TABLE
 CREATE TABLE IF NOT EXISTS public.service_categories (
   id TEXT PRIMARY KEY,
   name TEXT NOT NULL,
   service_type TEXT NOT NULL,
-  class public.service_class DEFAULT 'None',
+  class TEXT DEFAULT 'None',
   base_price DECIMAL(10,2) NOT NULL,
   position INTEGER DEFAULT 0,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
@@ -429,4 +450,15 @@ VALUES
 ('sc3', 'Evening Gown', 'Dry Clean', 25.00, 2),
 ('sc4', 'Hemming', 'Alteration', 12.00, 3),
 ('sc5', 'Winter Coat', 'Specialty', 22.50, 4)
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO public.service_classes (id, name, position)
+VALUES 
+('cl_shirts', 'Shirts', 0),
+('cl_pants', 'Pants', 1),
+('cl_suits', 'Suits', 2),
+('cl_coats', 'Coats/Jackets', 3),
+('cl_dresses', 'Dresses', 4),
+('cl_linen', 'Linen', 5),
+('cl_other', 'Other', 6)
 ON CONFLICT (id) DO NOTHING;

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useOrderStore } from '../store/useOrderStore';
 import { Button } from './ui/Button';
 import Combobox from './ui/Combobox';
-import { ServiceType, ServiceClass, OrderItem, Customer, Order } from '../types';
+import { ServiceType, OrderItem, Customer, Order } from '../types';
 import { qzService } from '../lib/qz-print';
 
 interface CreateOrderFormProps {
@@ -23,7 +23,8 @@ const CreateOrderForm: React.FC<CreateOrderFormProps> = ({ onClose, onSuccess })
         serviceCategories,
         kanbanColumns,
         settings,
-        getNextOrderNumber
+        getNextOrderNumber,
+        serviceClasses
     } = useOrderStore();
 
     const customers = allCustomers.filter(c => !c.isDeleted);
@@ -35,8 +36,8 @@ const CreateOrderForm: React.FC<CreateOrderFormProps> = ({ onClose, onSuccess })
     const [selectedStoreId, setSelectedStoreId] = useState('');
     const [hangerNumber, setHangerNumber] = useState('');
 
-    const [orderItems, setOrderItems] = useState<Partial<OrderItem & { class: ServiceClass }>[]>([
-        { id: Math.random().toString(36).substr(2, 9), category: '', class: ServiceClass.NONE, quantity: 1, unitPrice: 0, total: 0 }
+    const [orderItems, setOrderItems] = useState<Partial<OrderItem & { class: string }>[]>([
+        { id: Math.random().toString(36).substr(2, 9), category: '', class: 'None', quantity: 1, unitPrice: 0, total: 0 }
     ]);
     const [isPriority, setIsPriority] = useState(false);
     const [pickupDate, setPickupDate] = useState(new Date(Date.now() + 86400000 * 2).toISOString().split('T')[0]);
@@ -52,7 +53,7 @@ const CreateOrderForm: React.FC<CreateOrderFormProps> = ({ onClose, onSuccess })
     }, [stores, selectedStoreId]);
 
     const handleAddItem = () => {
-        setOrderItems([...orderItems, { id: Math.random().toString(36).substr(2, 9), category: '', class: ServiceClass.NONE, quantity: 1, unitPrice: 0, total: 0 }]);
+        setOrderItems([...orderItems, { id: Math.random().toString(36).substr(2, 9), category: '', class: 'None', quantity: 1, unitPrice: 0, total: 0 }]);
     };
 
     const handleRemoveItem = (id: string) => {
@@ -227,13 +228,13 @@ const CreateOrderForm: React.FC<CreateOrderFormProps> = ({ onClose, onSuccess })
                         <div key={item.id} className="grid grid-cols-12 gap-3 items-center bg-slate-50 dark:bg-slate-800/50 p-2 rounded-lg border border-slate-200 dark:border-slate-700">
                             <div className="col-span-5 flex gap-2">
                                 <select className="flex-[0.35] min-w-[75px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded p-1 text-[10px] uppercase font-bold outline-none focus:ring-1 focus:ring-primary/20 text-slate-900 dark:text-white" value={item.class} onChange={(e) => handleItemChange(item.id!, 'class', e.target.value)}>
-                                    <option value={ServiceClass.NONE}>All</option>
-                                    {Object.values(ServiceClass).filter(c => c !== ServiceClass.NONE).map(c => <option key={c} value={c}>{c}</option>)}
+                                    <option value="None">All</option>
+                                    {serviceClasses.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
                                 </select>
                                 <select required className="flex-1 min-w-0 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded p-1 text-xs truncate outline-none focus:ring-1 focus:ring-primary/20 text-slate-900 dark:text-white" value={item.category} onChange={(e) => handleItemChange(item.id!, 'category', e.target.value)}>
                                     <option value="">Select Service...</option>
                                     {serviceCategories
-                                        .filter(cat => item.class === ServiceClass.NONE || cat.class === item.class)
+                                        .filter(cat => item.class === 'None' || cat.class === item.class || cat.class === 'None')
                                         .map(cat => <option key={cat.id} value={cat.name}>{cat.name} (${cat.basePrice})</option>)}
                                 </select>
                             </div>

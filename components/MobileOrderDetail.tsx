@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useOrderStore } from '../store/useOrderStore';
-import { ServiceType, ServiceClass, OrderItem } from '../types';
+import { ServiceType, OrderItem } from '../types';
 import { Button } from './ui/Button';
 
 const MobileOrderDetail: React.FC = () => {
     const { id } = useParams();
     const navigate = useNavigate();
-    const { orders, customers, updateOrder, serviceCategories, settings } = useOrderStore();
+    const { orders, customers, updateOrder, serviceCategories, settings, serviceClasses } = useOrderStore();
 
     const order = orders.find(o => o.id === id);
     const customer = customers.find(c => c.id === order?.customerId);
@@ -15,8 +15,8 @@ const MobileOrderDetail: React.FC = () => {
     const [isEditing, setIsEditing] = useState(false);
 
     // Form State
-    const [items, setItems] = useState<(OrderItem & { class?: ServiceClass })[]>(
-        order?.items.map(item => ({ ...item, class: ServiceClass.NONE })) || []
+    const [items, setItems] = useState<(OrderItem & { class?: string })[]>(
+        order?.items.map(item => ({ ...item, class: 'None' })) || []
     );
     const [hangerNumber, setHangerNumber] = useState(order?.hangerNumber || '');
     const [priority, setPriority] = useState(order?.isPriority || false);
@@ -187,13 +187,13 @@ const MobileOrderDetail: React.FC = () => {
                                     <div className="space-y-3">
                                         <div className="flex gap-2">
                                             <select className="flex-[0.4] bg-slate-50 dark:bg-slate-800 border-none rounded-lg p-2 text-[10px] font-bold uppercase" value={item.class} onChange={(e) => handleItemChange(item.id, 'class', e.target.value)}>
-                                                <option value={ServiceClass.NONE}>Class</option>
-                                                {Object.values(ServiceClass).filter(c => c !== ServiceClass.NONE).map(c => <option key={c} value={c}>{c}</option>)}
+                                                <option value="None">Class</option>
+                                                {serviceClasses.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
                                             </select>
                                             <select className="flex-1 bg-slate-50 dark:bg-slate-800 border-none rounded-lg p-2 text-xs font-bold" value={item.category} onChange={e => handleItemChange(item.id, 'category', e.target.value)}>
                                                 <option value="">Category</option>
                                                 {serviceCategories
-                                                    .filter(cat => item.class === undefined || item.class === ServiceClass.NONE || cat.class === item.class)
+                                                    .filter(cat => item.class === undefined || item.class === 'None' || cat.class === item.class)
                                                     .map(cat => <option key={cat.id} value={cat.name}>{cat.name}</option>)}
                                             </select>
                                         </div>
@@ -254,7 +254,7 @@ const MobileOrderDetail: React.FC = () => {
                 <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/80 dark:bg-black/80 backdrop-blur-lg border-t border-slate-200 dark:border-[#283039] flex gap-3">
                     <Button variant="secondary" fullWidth onClick={() => {
                         setIsEditing(false);
-                        setItems(order.items.map(item => ({ ...item, class: ServiceClass.NONE })));
+                        setItems(order.items.map(item => ({ ...item, class: 'None' })));
                         setHangerNumber(order.hangerNumber || '');
                         setPriority(order.isPriority);
                         setStatus(order.status);

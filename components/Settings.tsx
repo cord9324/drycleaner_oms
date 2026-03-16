@@ -6,6 +6,7 @@ import { ServiceType, ServiceCategory, Store, User, KanbanColumn } from '../type
 import StoreForm from './StoreForm';
 import UserForm from './UserForm';
 import ServiceCategoryForm from './ServiceCategoryForm';
+import ServiceClassForm from './ServiceClassForm';
 import KanbanColumnForm from './KanbanColumnForm';
 
 const Settings: React.FC = () => {
@@ -14,6 +15,7 @@ const Settings: React.FC = () => {
     stores, deleteStore,
     users, deleteUser,
     serviceCategories, deleteServiceCategory, reorderServiceCategories,
+    serviceClasses, deleteServiceClass, reorderServiceClasses,
     kanbanColumns, deleteKanbanColumn, reorderKanbanColumns,
     settings, updateSettings
   } = useOrderStore();
@@ -24,6 +26,7 @@ const Settings: React.FC = () => {
   const [isStoreModalOpen, setStoreModalOpen] = useState(false);
   const [isUserModalOpen, setUserModalOpen] = useState(false);
   const [isServiceModalOpen, setServiceModalOpen] = useState(false);
+  const [isClassModalOpen, setClassModalOpen] = useState(false);
   const [isKanbanModalOpen, setKanbanModalOpen] = useState(false);
   const [isDeleteUserConfirmOpen, setDeleteUserConfirmOpen] = useState(false);
 
@@ -33,6 +36,7 @@ const Settings: React.FC = () => {
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
   const [editingServiceId, setEditingServiceId] = useState<string | null>(null);
+  const [editingClassId, setEditingClassId] = useState<string | null>(null);
   const [editingColumnId, setEditingColumnId] = useState<string | null>(null);
 
   // RBAC for Tabs
@@ -149,6 +153,42 @@ const Settings: React.FC = () => {
                     <td className="px-6 py-4 text-right">
                       <button onClick={() => { setEditingServiceId(cat.id); setServiceModalOpen(true); }} className="p-2 text-slate-400 hover:text-primary"><span className="material-symbols-outlined text-[20px]">edit</span></button>
                       <button onClick={() => deleteServiceCategory(cat.id)} className="p-2 text-slate-400 hover:text-red-500"><span className="material-symbols-outlined text-[20px]">delete</span></button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="flex justify-between items-center mb-6 mt-12">
+            <div>
+              <h2 className="text-xl font-bold text-slate-900 dark:text-white">Service Classes</h2>
+              <p className="text-sm text-slate-500">Manage tags like Shirts, Pants, Dresses</p>
+            </div>
+            <button onClick={() => { setEditingClassId(null); setClassModalOpen(true); }} className="bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white px-4 py-2 rounded-lg text-sm font-bold border border-slate-200 dark:border-slate-700">
+              + New Class
+            </button>
+          </div>
+          <div className="bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm">
+            <table className="w-full text-left">
+              <thead className="bg-slate-50 dark:bg-slate-900/50 text-slate-500 dark:text-slate-400 text-[10px] font-black uppercase tracking-widest">
+                <tr><th className="px-6 py-4">Class Name</th><th className="px-6 py-4 text-right">Actions</th></tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                {serviceClasses.map((cls, index) => (
+                  <tr key={cls.id} className="hover:bg-slate-50 dark:hover:bg-white/[0.01] transition-colors group">
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="flex flex-col opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button disabled={index === 0} onClick={() => reorderServiceClasses(index, index - 1)} className="material-symbols-outlined text-slate-400 hover:text-primary disabled:opacity-0 text-[18px]">keyboard_arrow_up</button>
+                          <button disabled={index === serviceClasses.length - 1} onClick={() => reorderServiceClasses(index, index + 1)} className="material-symbols-outlined text-slate-400 hover:text-primary disabled:opacity-0 text-[18px]">keyboard_arrow_down</button>
+                        </div>
+                        <span className="font-bold">{cls.name}</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <button onClick={() => { setEditingClassId(cls.id); setClassModalOpen(true); }} className="p-2 text-slate-400 hover:text-primary"><span className="material-symbols-outlined text-[20px]">edit</span></button>
+                      <button onClick={() => deleteServiceClass(cls.id)} className="p-2 text-slate-400 hover:text-red-500"><span className="material-symbols-outlined text-[20px]">delete</span></button>
                     </td>
                   </tr>
                 ))}
@@ -430,6 +470,10 @@ const Settings: React.FC = () => {
 
       <Modal isOpen={isServiceModalOpen} onClose={() => { setServiceModalOpen(false); setEditingServiceId(null); }} title="Service Category">
         {isServiceModalOpen && <ServiceCategoryForm initialData={serviceCategories.find(s => s.id === editingServiceId)} onClose={() => { setServiceModalOpen(false); setEditingServiceId(null); }} />}
+      </Modal>
+
+      <Modal isOpen={isClassModalOpen} onClose={() => { setClassModalOpen(false); setEditingClassId(null); }} title={editingClassId ? "Edit Service Class" : "New Service Class"}>
+        {isClassModalOpen && <ServiceClassForm initialData={serviceClasses.find(c => c.id === editingClassId)} onClose={() => { setClassModalOpen(false); setEditingClassId(null); }} />}
       </Modal>
 
       <Modal isOpen={isKanbanModalOpen} onClose={() => { setKanbanModalOpen(false); setEditingColumnId(null); }} title="Kanban Column">

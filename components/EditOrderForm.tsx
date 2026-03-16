@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useOrderStore } from '../store/useOrderStore';
-import { Order, OrderItem, ServiceType, ServiceClass } from '../types';
+import { Order, OrderItem, ServiceType } from '../types';
 
 interface EditOrderFormProps {
     order: Order;
@@ -9,10 +9,10 @@ interface EditOrderFormProps {
 }
 
 const EditOrderForm: React.FC<EditOrderFormProps> = ({ order, onClose, onSuccess }) => {
-    const { updateOrder, serviceCategories, settings, stores } = useOrderStore();
+    const { updateOrder, serviceCategories, settings, stores, serviceClasses } = useOrderStore();
 
-    const [items, setItems] = useState<(OrderItem & { class?: ServiceClass })[]>(
-        order.items.map(item => ({ ...item, class: ServiceClass.NONE }))
+    const [items, setItems] = useState<(OrderItem & { class?: string })[]>(
+        order.items.map(item => ({ ...item, class: 'None' }))
     );
     const [priority, setPriority] = useState(order.isPriority);
     const [hangerNumber, setHangerNumber] = useState(order.hangerNumber || '');
@@ -44,7 +44,7 @@ const EditOrderForm: React.FC<EditOrderFormProps> = ({ order, onClose, onSuccess
             id: Math.random().toString(36).substr(2, 9),
             category: '',
             serviceType: ServiceType.DRY_CLEAN,
-            class: ServiceClass.NONE,
+            class: 'None',
             quantity: 1,
             unitPrice: 0,
             total: 0
@@ -116,13 +116,13 @@ const EditOrderForm: React.FC<EditOrderFormProps> = ({ order, onClose, onSuccess
                     <div key={item.id} className="grid grid-cols-12 gap-3 items-center bg-slate-50 dark:bg-slate-800 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
                         <div className="col-span-5 flex gap-2">
                             <select className="flex-[0.35] min-w-[75px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg p-1.5 text-[10px] font-bold uppercase outline-none focus:ring-1 focus:ring-primary/20 text-slate-900 dark:text-white" value={item.class} onChange={(e) => handleItemChange(item.id, 'class', e.target.value)}>
-                                <option value={ServiceClass.NONE}>All</option>
-                                {Object.values(ServiceClass).filter(c => c !== ServiceClass.NONE).map(c => <option key={c} value={c}>{c}</option>)}
+                                <option value="None">All</option>
+                                {serviceClasses.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
                             </select>
                             <select required className="flex-1 min-w-0 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg p-1.5 text-xs truncate outline-none focus:ring-1 focus:ring-primary/20 text-slate-900 dark:text-white" value={item.category} onChange={e => handleItemChange(item.id, 'category', e.target.value)}>
                                 <option value="">Select Category</option>
                                 {serviceCategories
-                                    .filter(cat => item.class === ServiceClass.NONE || cat.class === item.class)
+                                    .filter(cat => item.class === 'None' || cat.class === item.class || cat.class === 'None')
                                     .map(cat => <option key={cat.id} value={cat.name}>{cat.name}</option>)}
                             </select>
                         </div>

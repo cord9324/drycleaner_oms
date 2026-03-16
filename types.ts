@@ -5,15 +5,10 @@ export enum ServiceType {
   SPECIALTY = 'Specialty'
 }
 
-export enum ServiceClass {
-  NONE = 'None',
-  SHIRTS = 'Shirts',
-  PANTS = 'Pants',
-  SUITS = 'Suits',
-  COATS_JACKETS = 'Coats/Jackets',
-  DRESSES = 'Dresses',
-  LINEN = 'Linen',
-  OTHER = 'Other'
+export interface ServiceClass {
+  id: string;
+  name: string;
+  position: number;
 }
 
 export enum OrderStatus {
@@ -29,7 +24,7 @@ export interface ServiceCategory {
   id: string;
   name: string;
   serviceType: ServiceType;
-  class: ServiceClass;
+  class: string;
   basePrice: number;
   position: number;
 }

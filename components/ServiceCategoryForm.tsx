@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useOrderStore } from '../store/useOrderStore';
-import { ServiceCategory, ServiceType, ServiceClass } from '../types';
+import { ServiceCategory, ServiceType } from '../types';
 
 interface ServiceCategoryFormProps {
     initialData?: ServiceCategory;
@@ -8,11 +8,11 @@ interface ServiceCategoryFormProps {
 }
 
 const ServiceCategoryForm: React.FC<ServiceCategoryFormProps> = ({ initialData, onClose }) => {
-    const { addServiceCategory, updateServiceCategory } = useOrderStore();
+    const { addServiceCategory, updateServiceCategory, serviceClasses } = useOrderStore();
     const [formData, setFormData] = useState({
         name: initialData?.name || '',
         serviceType: initialData?.serviceType || ServiceType.DRY_CLEAN,
-        class: initialData?.class || ServiceClass.NONE,
+        class: initialData?.class || (serviceClasses.length > 0 ? serviceClasses[0].name : 'None'),
         basePrice: initialData?.basePrice || 0
     });
 
@@ -32,8 +32,8 @@ const ServiceCategoryForm: React.FC<ServiceCategoryFormProps> = ({ initialData, 
             <select value={formData.serviceType} onChange={e => setFormData({ ...formData, serviceType: e.target.value as ServiceType })} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-sm outline-none">
                 {Object.values(ServiceType).map(t => <option key={t} value={t}>{t}</option>)}
             </select>
-            <select value={formData.class} onChange={e => setFormData({ ...formData, class: e.target.value as ServiceClass })} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-sm outline-none">
-                {Object.values(ServiceClass).map(c => <option key={c} value={c}>{c}</option>)}
+            <select value={formData.class} onChange={e => setFormData({ ...formData, class: e.target.value })} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-sm outline-none">
+                {serviceClasses.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
             </select>
             <input type="number" step="0.01" value={formData.basePrice} onChange={e => setFormData({ ...formData, basePrice: parseFloat(e.target.value) })} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-sm outline-none" />
             <button type="submit" className="w-full bg-primary text-white font-bold py-3.5 rounded-xl">Save Category</button>
