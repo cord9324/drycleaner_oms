@@ -283,6 +283,7 @@ CREATE TABLE IF NOT EXISTS public.orders (
   items JSONB NOT NULL DEFAULT '[]',
   subtotal DECIMAL(12,2) DEFAULT 0,
   tax DECIMAL(12,2) DEFAULT 0,
+  is_tax_exempt BOOLEAN DEFAULT FALSE,
   total DECIMAL(12,2) DEFAULT 0,
   pickup_date DATE,
   pickup_time TIME,

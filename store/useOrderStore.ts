@@ -147,6 +147,7 @@ export const useOrderStore = create<OrderState>((set, get) => ({
           pickupDate: o.pickup_date,
           pickupTime: o.pickup_time,
           isPriority: o.is_priority,
+          isTaxExempt: o.is_tax_exempt,
           storeId: o.store_id,
           specialHandling: o.special_handling,
           createdAt: o.created_at,
@@ -289,6 +290,7 @@ export const useOrderStore = create<OrderState>((set, get) => ({
       items: order.items,
       subtotal: order.subtotal,
       tax: order.tax,
+      is_tax_exempt: order.isTaxExempt,
       total: order.total,
       pickup_date: order.pickupDate,
       pickup_time: order.pickupTime,
@@ -322,6 +324,7 @@ export const useOrderStore = create<OrderState>((set, get) => ({
     if (updates.items) dbUpdates.items = updates.items;
     if (updates.subtotal !== undefined) dbUpdates.subtotal = updates.subtotal;
     if (updates.tax !== undefined) dbUpdates.tax = updates.tax;
+    if (updates.isTaxExempt !== undefined) dbUpdates.is_tax_exempt = updates.isTaxExempt;
     if (updates.total !== undefined) dbUpdates.total = updates.total;
     if (updates.pickupDate) dbUpdates.pickup_date = updates.pickupDate;
     if (updates.pickupTime) dbUpdates.pickup_time = updates.pickupTime;

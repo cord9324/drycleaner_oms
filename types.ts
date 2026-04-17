@@ -71,6 +71,7 @@ export interface Order {
   items: OrderItem[];
   subtotal: number;
   tax: number;
+  isTaxExempt?: boolean;
   total: number;
   createdAt: string;
   completedAt?: string;

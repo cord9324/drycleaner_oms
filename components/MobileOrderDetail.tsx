@@ -20,6 +20,7 @@ const MobileOrderDetail: React.FC = () => {
     );
     const [hangerNumber, setHangerNumber] = useState(order?.hangerNumber || '');
     const [priority, setPriority] = useState(order?.isPriority || false);
+    const [isTaxExempt, setIsTaxExempt] = useState(order?.isTaxExempt || false);
     const [status, setStatus] = useState(order?.status || '');
 
     if (!order) {
@@ -51,11 +52,13 @@ const MobileOrderDetail: React.FC = () => {
 
     const handleSave = () => {
         const subtotal = items.reduce((acc, i) => acc + i.total, 0);
-        const tax = subtotal * settings.taxRate;
+        const appliedTaxRate = isTaxExempt ? 0 : settings.taxRate;
+        const tax = subtotal * appliedTaxRate;
 
         updateOrder(order.id, {
             items: items,
             isPriority: priority,
+            isTaxExempt: isTaxExempt,
             status: status as any,
             hangerNumber: hangerNumber.trim() || undefined,
             subtotal,
@@ -147,21 +150,39 @@ const MobileOrderDetail: React.FC = () => {
                     </div>
                     <div className={`p-4 rounded-2xl shadow-sm border transition-all ${priority ? 'bg-amber-50 dark:bg-amber-900/10 border-amber-200 dark:border-amber-900/20' : 'bg-white dark:bg-[#111418] border-slate-100 dark:border-[#283039]'
                         }`}>
-                        <label className="text-[10px] font-bold uppercase text-slate-400 block mb-2">Priority</label>
-                        <div className="flex items-center gap-2">
-                            {isEditing ? (
-                                <input
-                                    type="checkbox"
-                                    checked={priority}
-                                    onChange={e => setPriority(e.target.checked)}
-                                    className="accent-primary h-5 w-5"
-                                />
-                            ) : (
-                                <span className="material-symbols-outlined text-amber-500">{priority ? 'priority_high' : 'low_priority'}</span>
-                            )}
-                            <span className={`text-sm font-bold ${priority ? 'text-amber-700' : 'text-slate-400'}`}>
-                                {priority ? 'Urgent' : 'Normal'}
-                            </span>
+                        <label className="text-[10px] font-bold uppercase text-slate-400 block mb-2">Options</label>
+                        <div className="flex flex-col gap-2">
+                            <div className="flex items-center gap-2">
+                                {isEditing ? (
+                                    <input
+                                        type="checkbox"
+                                        checked={priority}
+                                        onChange={e => setPriority(e.target.checked)}
+                                        className="accent-primary h-5 w-5"
+                                    />
+                                ) : (
+                                    <span className="material-symbols-outlined text-amber-500">{priority ? 'priority_high' : 'low_priority'}</span>
+                                )}
+                                <span className={`text-sm font-bold ${priority ? 'text-amber-700' : 'text-slate-400'}`}>
+                                    {priority ? 'Urgent' : 'Normal'}
+                                </span>
+                            </div>
+                            
+                            <div className="flex items-center gap-2">
+                                {isEditing ? (
+                                    <input
+                                        type="checkbox"
+                                        checked={isTaxExempt}
+                                        onChange={e => setIsTaxExempt(e.target.checked)}
+                                        className="accent-primary h-5 w-5"
+                                    />
+                                ) : (
+                                    <span className="material-symbols-outlined text-slate-400">{isTaxExempt ? 'money_off' : 'attach_money'}</span>
+                                )}
+                                <span className={`text-sm font-bold ${isTaxExempt ? 'text-emerald-500' : 'text-slate-400'}`}>
+                                    {isTaxExempt ? 'Tax Exempt' : 'Taxable'}
+                                </span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -257,6 +278,7 @@ const MobileOrderDetail: React.FC = () => {
                         setItems(order.items.map(item => ({ ...item, class: 'None' })));
                         setHangerNumber(order.hangerNumber || '');
                         setPriority(order.isPriority);
+                        setIsTaxExempt(order.isTaxExempt || false);
                         setStatus(order.status);
                     }}>Cancel</Button>
                     <Button fullWidth onClick={handleSave}>Update Order</Button>

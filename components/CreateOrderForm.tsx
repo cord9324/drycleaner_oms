@@ -43,6 +43,7 @@ const CreateOrderForm: React.FC<CreateOrderFormProps> = ({ onClose, onSuccess })
     const [pickupDate, setPickupDate] = useState(new Date(Date.now() + 86400000 * 2).toISOString().split('T')[0]);
     const [pickupTime, setPickupTime] = useState(settings.defaultPickupTime || '17:00');
     const [specialHandling, setSpecialHandling] = useState('');
+    const [isTaxExempt, setIsTaxExempt] = useState(false);
 
     const selectedCustomer = customers.find(c => c.id === selectedCustomerId);
 
@@ -108,7 +109,7 @@ const CreateOrderForm: React.FC<CreateOrderFormProps> = ({ onClose, onSuccess })
                 if (customer) {
                     await updateCustomer(customer.id, {
                         lastOrderDate: now,
-                        totalSpent: (customer.totalSpent || 0) + (calculateSubtotal() * (1 + settings.taxRate))
+                        totalSpent: (customer.totalSpent || 0) + (calculateSubtotal() * (1 + (isTaxExempt ? 0 : settings.taxRate)))
                     });
                 }
             }
@@ -116,7 +117,8 @@ const CreateOrderForm: React.FC<CreateOrderFormProps> = ({ onClose, onSuccess })
             if (!customer) throw new Error("Customer missing");
 
             const subtotal = calculateSubtotal();
-            const tax = subtotal * settings.taxRate;
+            const appliedTaxRate = isTaxExempt ? 0 : settings.taxRate;
+            const tax = subtotal * appliedTaxRate;
             const finalItems = orderItems.map(item => ({
                 ...item,
                 id: item.id!,
@@ -145,6 +147,7 @@ const CreateOrderForm: React.FC<CreateOrderFormProps> = ({ onClose, onSuccess })
                 pickupDate: pickupDate,
                 pickupTime: pickupTime,
                 isPriority,
+                isTaxExempt,
                 storeId: selectedStoreId || stores[0]?.id || 's1',
                 specialHandling: specialHandling.trim()
             };
@@ -291,8 +294,12 @@ const CreateOrderForm: React.FC<CreateOrderFormProps> = ({ onClose, onSuccess })
 
             <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex justify-between items-end">
                 <div>
+                    <div className="flex items-center gap-2 mb-1">
+                        <input type="checkbox" id="taxExempt" checked={isTaxExempt} onChange={(e) => setIsTaxExempt(e.target.checked)} className="accent-primary h-4 w-4" />
+                        <label htmlFor="taxExempt" className="text-[10px] font-bold text-slate-500 uppercase cursor-pointer">Tax Exempt</label>
+                    </div>
                     <p className="text-[10px] font-bold text-slate-400 uppercase">Estimated Total</p>
-                    <p className="text-2xl font-black text-primary">${(calculateSubtotal() * (1 + settings.taxRate)).toFixed(2)}</p>
+                    <p className="text-2xl font-black text-primary">${(calculateSubtotal() * (1 + (isTaxExempt ? 0 : settings.taxRate))).toFixed(2)}</p>
                 </div>
                 <Button type="submit" isLoading={isSubmitting} size="lg">Create Order</Button>
             </div>

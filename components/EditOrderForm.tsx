@@ -20,6 +20,7 @@ const EditOrderForm: React.FC<EditOrderFormProps> = ({ order, onClose, onSuccess
     const [pickupTime, setPickupTime] = useState(order.pickupTime || '17:00');
     const [specialHandling, setSpecialHandling] = useState(order.specialHandling || '');
     const [selectedStoreId, setSelectedStoreId] = useState(order.storeId);
+    const [isTaxExempt, setIsTaxExempt] = useState(order.isTaxExempt || false);
 
     const handleItemChange = (itemId: string, field: string, value: any) => {
         setItems(items.map(item => {
@@ -60,11 +61,13 @@ const EditOrderForm: React.FC<EditOrderFormProps> = ({ order, onClose, onSuccess
     const handleSave = (e: React.FormEvent) => {
         e.preventDefault();
         const subtotal = items.reduce((acc, i) => acc + i.total, 0);
-        const tax = subtotal * settings.taxRate;
+        const appliedTaxRate = isTaxExempt ? 0 : settings.taxRate;
+        const tax = subtotal * appliedTaxRate;
 
         updateOrder(order.id, {
             items: items,
             isPriority: priority,
+            isTaxExempt: isTaxExempt,
             hangerNumber: hangerNumber.trim() || undefined,
             pickupDate: pickupDate,
             pickupTime: pickupTime,
@@ -87,8 +90,14 @@ const EditOrderForm: React.FC<EditOrderFormProps> = ({ order, onClose, onSuccess
                     <input type="text" placeholder="E.g. A-12" className="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary/20" value={hangerNumber} onChange={e => setHangerNumber(e.target.value)} />
                 </div>
                 <div>
-                    <label className="text-xs font-bold uppercase text-slate-500 mb-1 block">Expedite</label>
-                    <div className="flex items-center gap-3 bg-amber-50 dark:bg-amber-900/10 p-2.5 rounded-lg border border-amber-200 h-[46px]"><input type="checkbox" id="editPriority" checked={priority} onChange={e => setPriority(e.target.checked)} /><label htmlFor="editPriority" className="text-xs font-bold text-amber-600">Priority</label></div>
+                    <label className="text-xs font-bold uppercase text-slate-500 mb-1 block">Expedite & Tax</label>
+                    <div className="flex items-center gap-3 bg-amber-50 dark:bg-amber-900/10 p-2.5 rounded-lg border border-amber-200 h-[46px]">
+                        <input type="checkbox" id="editPriority" checked={priority} onChange={e => setPriority(e.target.checked)} />
+                        <label htmlFor="editPriority" className="text-xs font-bold text-amber-600 mr-2">Priority</label>
+                        
+                        <input type="checkbox" id="editTaxExempt" checked={isTaxExempt} onChange={e => setIsTaxExempt(e.target.checked)} />
+                        <label htmlFor="editTaxExempt" className="text-xs font-bold text-slate-600 dark:text-slate-400">Tax Exempt</label>
+                    </div>
                 </div>
             </div>
 
